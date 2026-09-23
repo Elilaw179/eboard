@@ -1,0 +1,15 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Note diagrams and classroom illustrations
+    match /note-images/{allPaths=**} {
+      // Public read for student viewing
+      allow read: if true;
+
+      // Only authenticated teachers can upload, capped at 5MB, must be image
+      allow write: if request.auth != null
+                   && request.resource.size < 5 * 1024 * 1024
+                   && request.resource.contentType.matches('image/.*');
+    }
+  }
+}

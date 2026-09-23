@@ -1,0 +1,39 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // EBoard Notes Collection Rules
+    match /notes/{noteId} {
+      // Unauthenticated students can ONLY read published notes
+      // Authenticated teachers/admins can read all notes (both draft and published)
+      allow read: if resource.data.status == 'published' || request.auth != null;
+
+      // Only authenticated administrators/teachers can create, update, or delete notes
+      allow create: if request.auth != null
+                    && request.resource.data.title is string
+                    && request.resource.data.title.size() > 0
+                    && request.resource.data.className is string
+                    && request.resource.data.status in ['draft', 'published'];
+
+      allow update: if request.auth != null
+                    && request.resource.data.title is string
+                    && request.resource.data.title.size() > 0
+                    && request.resource.data.status in ['draft', 'published'];
+
+      allow delete: if request.auth != null;
+    }
+
+    // Subjects Collection Rules
+    match /subjects/{subjectId} {
+      // Anyone can read subjects for filters
+      allow read: if true;
+      // Only authenticated teachers can add or modify subjects
+      allow write: if request.auth != null;
+    }
+
+    // Classes / Metadata Collection Rules
+    match /settings/{settingId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+  }
+}
