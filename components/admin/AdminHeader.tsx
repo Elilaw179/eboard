@@ -1,8 +1,6 @@
-'use client';
-
 import React from 'react';
 import Link from 'next/link';
-import { Plus, Bell, Sparkles } from 'lucide-react';
+import { Plus } from 'lucide-react';
 
 interface AdminHeaderProps {
   title: string;
@@ -10,7 +8,6 @@ interface AdminHeaderProps {
   action?: {
     label: string;
     href: string;
-    icon?: React.ElementType;
   };
 }
 
@@ -27,7 +24,7 @@ export default function AdminHeader({ title, subtitle, action }: AdminHeaderProp
           href={action.href}
           className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-semibold shadow-sm shadow-blue-600/20 transition"
         >
-          {action.icon ? <action.icon className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+          <Plus className="w-4 h-4" />
           <span>{action.label}</span>
         </Link>
       )}

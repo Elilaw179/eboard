@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { BookMarked, Plus, ArrowRight, FileText, Sparkles } from 'lucide-react';
 import { DEFAULT_SUBJECTS } from '@/types/subject';
 import { Note } from '@/types/note';
+import { getAllSubjects, createSubject } from '@/services/subjects';
 
 interface SubjectsClientProps {
   initialNotes: Note[];
@@ -20,8 +21,19 @@ export default function SubjectsClient({ initialNotes }: SubjectsClientProps) {
   });
 
   const [newSubject, setNewSubject] = useState('');
+  const [isAdding, setIsAdding] = useState(false);
 
-  const handleAddSubject = (e: React.FormEvent) => {
+  useEffect(() => {
+    getAllSubjects().then((subjects) => {
+      const set = new Set(subjects);
+      initialNotes.forEach((n) => {
+        if (n.subject) set.add(n.subject.trim());
+      });
+      setSubjectsList(Array.from(set).sort());
+    });
+  }, [initialNotes]);
+
+  const handleAddSubject = async (e: React.FormEvent) => {
     e.preventDefault();
     const clean = newSubject.trim();
     if (!clean) return;
@@ -29,8 +41,16 @@ export default function SubjectsClient({ initialNotes }: SubjectsClientProps) {
       alert('This subject is already in your subjects list.');
       return;
     }
-    setSubjectsList((prev) => [...prev, clean].sort());
-    setNewSubject('');
+    setIsAdding(true);
+    try {
+      await createSubject(clean);
+      setSubjectsList((prev) => Array.from(new Set([...prev, clean])).sort());
+      setNewSubject('');
+    } catch (err: any) {
+      alert(err.message || 'Failed to add subject.');
+    } finally {
+      setIsAdding(false);
+    }
   };
 
   return (

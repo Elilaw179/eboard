@@ -2,7 +2,6 @@ import React from 'react';
 import { getAllNotesForAdmin } from '@/services/notes';
 import AdminHeader from '@/components/admin/AdminHeader';
 import NotesTableClient from './NotesTableClient';
-import { Plus } from 'lucide-react';
 
 export const revalidate = 0;
 
@@ -17,7 +16,6 @@ export default async function AdminNotesPage() {
         action={{
           label: 'Create Note',
           href: '/admin/notes/new',
-          icon: Plus,
         }}
       />
       <NotesTableClient initialNotes={notes} />

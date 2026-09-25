@@ -276,9 +276,9 @@ Force (Newtons, N) = mass (kg) * acceleration (m/s²)</code></pre>
 ];
 
 // Local storage key for persisting notes created during demo/local testing
-const LOCAL_STORAGE_KEY = 'eboard_stored_notes_v1';
+export const LOCAL_STORAGE_KEY = 'eboard_stored_notes_v1';
 
-function getLocalNotes(): Note[] {
+export function getLocalNotes(): Note[] {
   if (typeof window === 'undefined') return INITIAL_SEED_NOTES;
   try {
     const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
@@ -293,7 +293,7 @@ function getLocalNotes(): Note[] {
   }
 }
 
-function saveLocalNotes(notes: Note[]): void {
+export function saveLocalNotes(notes: Note[]): void {
   if (typeof window === 'undefined') return;
   try {
     localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(notes));
@@ -441,9 +441,35 @@ export async function createNote(formData: NoteFormData, authorName: string = 'T
   if (isConfigured && db) {
     try {
       const docRef = await addDoc(collection(db, NOTES_COLLECTION), newNoteData);
+      const newNote: Note = {
+        ...newNoteData,
+        id: docRef.id,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      const list = getLocalNotes();
+      list.unshift(newNote);
+      saveLocalNotes(list);
       return docRef.id;
-    } catch (err) {
+    } catch (err: any) {
       console.warn('Firestore addDoc failed, creating in local fallback:', err);
+      // Fallback local save
+      const newId = `note-${Date.now()}`;
+      const localNote: Note = {
+        ...newNoteData,
+        id: newId,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      const list = getLocalNotes();
+      list.unshift(localNote);
+      saveLocalNotes(list);
+
+      if (err?.code === 'permission-denied') {
+        console.error('Firestore Permission Denied: Cloud Firestore security rules are blocking writes. Please publish allow read, write rules in Firebase Console.');
+      }
+      return newId;
     }
   }
 
@@ -478,17 +504,7 @@ export async function updateNote(id: string, formData: Partial<NoteFormData>): P
   if (classSlug) updates.classSlug = classSlug;
   if (plainTextPreview !== undefined) updates.plainTextPreview = plainTextPreview;
 
-  if (isConfigured && db) {
-    try {
-      const docRef = doc(db, NOTES_COLLECTION, id);
-      await updateDoc(docRef, updates);
-      return;
-    } catch (err) {
-      console.warn('Firestore updateDoc failed, updating local store:', err);
-    }
-  }
-
-  // Fallback local update
+  // Always update local storage
   const list = getLocalNotes();
   const index = list.findIndex((n) => n.id === id);
   if (index !== -1) {
@@ -500,6 +516,16 @@ export async function updateNote(id: string, formData: Partial<NoteFormData>): P
       updatedAt: new Date(),
     };
     saveLocalNotes(list);
+  }
+
+  if (isConfigured && db) {
+    try {
+      const docRef = doc(db, NOTES_COLLECTION, id);
+      await updateDoc(docRef, updates);
+      return;
+    } catch (err) {
+      console.warn('Firestore updateDoc failed, updated local store only:', err);
+    }
   }
 }
 
@@ -516,18 +542,18 @@ export async function toggleNoteStatus(id: string, currentStatus: NoteStatus): P
  * Delete a Note
  */
 export async function deleteNote(id: string): Promise<void> {
+  const list = getLocalNotes().filter((n) => n.id !== id);
+  saveLocalNotes(list);
+
   if (isConfigured && db) {
     try {
       const docRef = doc(db, NOTES_COLLECTION, id);
       await deleteDoc(docRef);
       return;
     } catch (err) {
-      console.warn('Firestore deleteDoc failed, removing from local store:', err);
+      console.warn('Firestore deleteDoc failed, removed from local store only:', err);
     }
   }
-
-  const list = getLocalNotes().filter((n) => n.id !== id);
-  saveLocalNotes(list);
 }
 
 /**

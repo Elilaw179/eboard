@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import {
   Plus,
@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 import { Note, NoteStatus } from '@/types/note';
 import { CLASSES } from '@/types/class';
-import { toggleNoteStatus, deleteNote } from '@/services/notes';
+import { toggleNoteStatus, deleteNote, getLocalNotes } from '@/services/notes';
 import { formatDate } from '@/lib/utils/format';
 import DeleteConfirmModal from '@/components/admin/DeleteConfirmModal';
 
@@ -27,6 +27,28 @@ interface NotesTableClientProps {
 
 export default function NotesTableClient({ initialNotes }: NotesTableClientProps) {
   const [notes, setNotes] = useState<Note[]>(initialNotes);
+
+  useEffect(() => {
+    // Merge any locally stored notes so that newly created notes are immediately visible
+    const local = getLocalNotes();
+    if (local && local.length > 0) {
+      setNotes((prev) => {
+        const map = new Map<string, Note>();
+        prev.forEach((n) => map.set(n.id, n));
+        local.forEach((n) => map.set(n.id, n));
+        return Array.from(map.values()).sort((a, b) => {
+          const timeA = (a.createdAt as any)?.seconds
+            ? (a.createdAt as any).seconds * 1000
+            : new Date(a.createdAt).getTime();
+          const timeB = (b.createdAt as any)?.seconds
+            ? (b.createdAt as any).seconds * 1000
+            : new Date(b.createdAt).getTime();
+          return timeB - timeA;
+        });
+      });
+    }
+  }, [initialNotes]);
+
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedClass, setSelectedClass] = useState('All');
   const [selectedStatus, setSelectedStatus] = useState('All');

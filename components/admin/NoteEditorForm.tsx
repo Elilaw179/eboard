@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -16,6 +16,7 @@ import { ClassGrade, CLASSES } from '@/types/class';
 import { Note, NoteFormData, NoteStatus } from '@/types/note';
 import { DEFAULT_SUBJECTS } from '@/types/subject';
 import { createNote, updateNote } from '@/services/notes';
+import { getAllSubjects, createSubject } from '@/services/subjects';
 import TipTapEditor from '@/components/editor/TipTapEditor';
 
 interface NoteEditorFormProps {
@@ -36,8 +37,17 @@ export default function NoteEditorForm({
   const [subject, setSubject] = useState(
     initialNote?.subject || 'Computer Science'
   );
+  const [availableSubjects, setAvailableSubjects] = useState<string[]>(DEFAULT_SUBJECTS);
   const [customSubject, setCustomSubject] = useState('');
   const [isCustomSubject, setIsCustomSubject] = useState(false);
+
+  useEffect(() => {
+    getAllSubjects().then((subs) => {
+      if (subs && subs.length > 0) {
+        setAvailableSubjects(subs);
+      }
+    });
+  }, []);
   const [content, setContent] = useState(
     initialNote?.content || `<h2>Lesson Overview</h2><p>Start typing or paste classroom notes directly from Microsoft Word...</p>`
   );
@@ -74,6 +84,14 @@ export default function NoteEditorForm({
     setStatus(intendedStatus);
 
     try {
+      if (isCustomSubject && customSubject.trim()) {
+        try {
+          await createSubject(customSubject.trim());
+        } catch (e) {
+          console.warn('Failed to persist custom subject:', e);
+        }
+      }
+
       const formData: NoteFormData = {
         title: title.trim(),
         subject: activeSubject,
@@ -220,7 +238,7 @@ export default function NoteEditorForm({
                 onChange={(e) => setSubject(e.target.value)}
                 className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                {DEFAULT_SUBJECTS.map((sub) => (
+                {availableSubjects.map((sub) => (
                   <option key={sub} value={sub}>
                     {sub}
                   </option>

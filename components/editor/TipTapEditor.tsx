@@ -43,6 +43,7 @@ import {
   Trash2,
 } from 'lucide-react';
 import { uploadNoteImage } from '@/lib/firebase/storage';
+import BoardThemeToggle from '@/components/student/BoardThemeToggle';
 
 interface TipTapEditorProps {
   content: string;
@@ -55,11 +56,22 @@ export default function TipTapEditor({
   onChange,
   placeholder = 'Write or paste your classroom notes here (supports copying directly from Microsoft Word)...',
 }: TipTapEditorProps) {
+  const [boardTheme, setBoardTheme] = useState<'white' | 'black'>('white');
   const [showColorPicker, setShowColorPicker] = useState(false);
   const [showHighlightPicker, setShowHighlightPicker] = useState(false);
   const [showTableMenu, setShowTableMenu] = useState(false);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Load saved board theme
+  React.useEffect(() => {
+    try {
+      const saved = localStorage.getItem('eboard-theme') as 'white' | 'black' | null;
+      if (saved === 'white' || saved === 'black') {
+        setBoardTheme(saved);
+      }
+    } catch {}
+  }, []);
 
   const editor = useEditor({
     extensions: [
@@ -518,13 +530,32 @@ export default function TipTapEditor({
             </div>
           )}
         </div>
+
+        {/* Board Background Switcher (Whiteboard / Blackboard) */}
+        <div className="ml-auto flex items-center pl-2">
+          <BoardThemeToggle
+            theme={boardTheme}
+            onChange={(theme) => {
+              setBoardTheme(theme);
+              try {
+                localStorage.setItem('eboard-theme', theme);
+              } catch {}
+            }}
+          />
+        </div>
       </div>
 
       {/* ========================================================= */}
-      {/* WORD-LIKE DOCUMENT SHEET CANVAS                           */}
+      {/* WORD-LIKE / BOARD DOCUMENT SHEET CANVAS                   */}
       {/* ========================================================= */}
-      <div className="p-4 sm:p-8 bg-slate-200/60 overflow-y-auto flex justify-center">
-        <div className="w-full max-w-4xl bg-white rounded-xl shadow-document border border-slate-200/90 transition-all">
+      <div className={`p-4 sm:p-8 overflow-y-auto flex justify-center transition-colors duration-300 ${
+        boardTheme === 'black' ? 'bg-slate-950' : 'bg-slate-200/60'
+      }`}>
+        <div className={`w-full max-w-4xl rounded-xl transition-all duration-300 ${
+          boardTheme === 'black'
+            ? 'bg-[#0f172a] text-slate-100 border border-slate-800 shadow-2xl blackboard-theme'
+            : 'bg-white text-slate-900 border border-slate-200/90 shadow-document'
+        }`}>
           <EditorContent editor={editor} />
         </div>
       </div>

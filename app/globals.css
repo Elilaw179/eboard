@@ -33,6 +33,13 @@ button, a, svg, .select-none {
   transition: all 0.3s ease-in-out;
 }
 
+.board-canvas.blackboard-mode {
+  background-color: #0f172a;
+  color: #f8fafc;
+  border-color: #334155;
+  box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.6), 0 0 25px rgba(59, 130, 246, 0.1);
+}
+
 /* Projector / Focus Mode */
 .projector-active {
   background-color: #0b1120 !important;
@@ -218,6 +225,117 @@ button, a, svg, .select-none {
 .tiptap-content [style*="text-align: justify"],
 .tiptap-content [style*="text-align:justify"] {
   text-align: justify;
+}
+
+/* Blackboard Theme Typography & Elements */
+.blackboard-theme,
+.blackboard-mode .tiptap-content,
+.tiptap-content.blackboard-theme {
+  color: #f1f5f9;
+}
+
+.blackboard-theme h1,
+.blackboard-mode .tiptap-content h1,
+.tiptap-content.blackboard-theme h1 {
+  color: #ffffff;
+  border-bottom: 2px solid #334155;
+}
+
+.blackboard-theme h2,
+.blackboard-mode .tiptap-content h2,
+.tiptap-content.blackboard-theme h2 {
+  color: #f8fafc;
+}
+
+.blackboard-theme h3,
+.blackboard-mode .tiptap-content h3,
+.tiptap-content.blackboard-theme h3 {
+  color: #e2e8f0;
+}
+
+.blackboard-theme p,
+.blackboard-mode .tiptap-content p,
+.tiptap-content.blackboard-theme p {
+  color: #e2e8f0;
+}
+
+.blackboard-theme strong,
+.blackboard-mode .tiptap-content strong,
+.tiptap-content.blackboard-theme strong {
+  color: #ffffff;
+}
+
+.blackboard-theme ul,
+.blackboard-mode .tiptap-content ul,
+.blackboard-theme ol,
+.blackboard-mode .tiptap-content ol,
+.tiptap-content.blackboard-theme ul,
+.tiptap-content.blackboard-theme ol {
+  color: #e2e8f0;
+}
+
+.blackboard-theme blockquote,
+.blackboard-mode .tiptap-content blockquote,
+.tiptap-content.blackboard-theme blockquote {
+  border-left-color: #3b82f6;
+  color: #cbd5e1;
+  background-color: #1e293b;
+}
+
+.blackboard-theme code,
+.blackboard-mode .tiptap-content code,
+.tiptap-content.blackboard-theme code {
+  background-color: #1e293b;
+  color: #93c5fd;
+  border-color: #334155;
+}
+
+.blackboard-theme pre,
+.blackboard-mode .tiptap-content pre,
+.tiptap-content.blackboard-theme pre {
+  background-color: #020617;
+  border-color: #334155;
+  color: #f8fafc;
+}
+
+.blackboard-theme table,
+.blackboard-mode .tiptap-content table,
+.tiptap-content.blackboard-theme table {
+  border-color: #334155;
+}
+
+.blackboard-theme table td,
+.blackboard-theme table th,
+.blackboard-mode .tiptap-content table td,
+.blackboard-mode .tiptap-content table th,
+.tiptap-content.blackboard-theme table td,
+.tiptap-content.blackboard-theme table th {
+  border-color: #334155;
+}
+
+.blackboard-theme table th,
+.blackboard-mode .tiptap-content table th,
+.tiptap-content.blackboard-theme table th {
+  background-color: #1e293b;
+  color: #f8fafc;
+}
+
+.blackboard-theme table tr:nth-child(even) td,
+.blackboard-mode .tiptap-content table tr:nth-child(even) td,
+.tiptap-content.blackboard-theme table tr:nth-child(even) td {
+  background-color: rgba(30, 41, 59, 0.45);
+}
+
+.blackboard-theme a,
+.blackboard-mode .tiptap-content a,
+.tiptap-content.blackboard-theme a {
+  color: #60a5fa;
+}
+
+.blackboard-theme a:hover,
+.blackboard-mode .tiptap-content a:hover,
+.tiptap-content.blackboard-theme a:hover {
+  color: #93c5fd;
 }
 
 /* TipTap Editor editable area reset */
