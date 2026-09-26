@@ -9,6 +9,7 @@ import {
   query,
   where,
   orderBy,
+  limit,
   serverTimestamp,
   Timestamp,
 } from 'firebase/firestore';
@@ -313,40 +314,48 @@ export async function getPublishedNotes(options?: {
   // If Firestore is connected, query Firestore
   if (isConfigured && db) {
     try {
+      // IMPORTANT: Do NOT combine where() + orderBy() — that requires a composite
+      // index in Firebase Console. We use simple where() filters and sort client-side.
       let q = query(
         collection(db, NOTES_COLLECTION),
         where('status', '==', 'published')
       );
 
       if (options?.className) {
-        q = query(q, where('className', '==', options.className));
+        q = query(
+          collection(db, NOTES_COLLECTION),
+          where('status', '==', 'published'),
+          where('className', '==', options.className)
+        );
       } else if (options?.classSlug) {
-        q = query(q, where('classSlug', '==', options.classSlug));
+        q = query(
+          collection(db, NOTES_COLLECTION),
+          where('status', '==', 'published'),
+          where('classSlug', '==', options.classSlug)
+        );
       }
 
       if (options?.subject && options.subject !== 'All') {
-        q = query(q, where('subject', '==', options.subject));
+        q = query(
+          collection(db, NOTES_COLLECTION),
+          where('status', '==', 'published'),
+          where('subject', '==', options.subject)
+        );
       }
 
       const snapshot = await getDocs(q);
-      if (!snapshot.empty) {
-        const notes: Note[] = [];
-        snapshot.forEach((docSnap) => {
-          const data = docSnap.data();
-          notes.push({
-            id: docSnap.id,
-            ...data,
-          } as Note);
-        });
-        // Sort newest first
-        return notes.sort((a, b) => {
-          const timeA = a.createdAt?.seconds ? a.createdAt.seconds * 1000 : new Date(a.createdAt).getTime();
-          const timeB = b.createdAt?.seconds ? b.createdAt.seconds * 1000 : new Date(b.createdAt).getTime();
-          return timeB - timeA;
-        });
-      }
-    } catch (err) {
-      console.warn('Firestore query failed, using local/demo notes cache:', err);
+      const notes: Note[] = [];
+      snapshot.forEach((docSnap) => {
+        notes.push({ id: docSnap.id, ...docSnap.data() } as Note);
+      });
+      // Sort newest first client-side (no composite index required)
+      return notes.sort((a, b) => {
+        const timeA = a.createdAt?.seconds ? a.createdAt.seconds * 1000 : new Date(a.createdAt).getTime();
+        const timeB = b.createdAt?.seconds ? b.createdAt.seconds * 1000 : new Date(b.createdAt).getTime();
+        return timeB - timeA;
+      });
+    } catch (err: any) {
+      console.error('[ClassBoard] Firestore getPublishedNotes error:', err?.code, err?.message);
     }
   }
 
@@ -396,17 +405,20 @@ export async function getNoteById(id: string): Promise<Note | null> {
 export async function getAllNotesForAdmin(): Promise<Note[]> {
   if (isConfigured && db) {
     try {
-      const q = query(collection(db, NOTES_COLLECTION), orderBy('createdAt', 'desc'));
-      const snapshot = await getDocs(q);
-      if (!snapshot.empty) {
-        const notes: Note[] = [];
-        snapshot.forEach((docSnap) => {
-          notes.push({ id: docSnap.id, ...docSnap.data() } as Note);
-        });
-        return notes;
-      }
-    } catch (err) {
-      console.warn('Firestore getAllNotes failed, checking local store:', err);
+      // Simple collection fetch — no orderBy to avoid needing an index
+      const snapshot = await getDocs(collection(db, NOTES_COLLECTION));
+      const notes: Note[] = [];
+      snapshot.forEach((docSnap) => {
+        notes.push({ id: docSnap.id, ...docSnap.data() } as Note);
+      });
+      // Sort client-side
+      return notes.sort((a, b) => {
+        const timeA = a.createdAt?.seconds ? a.createdAt.seconds * 1000 : new Date(a.createdAt).getTime();
+        const timeB = b.createdAt?.seconds ? b.createdAt.seconds * 1000 : new Date(b.createdAt).getTime();
+        return timeB - timeA;
+      });
+    } catch (err: any) {
+      console.error('[ClassBoard] Firestore getAllNotesForAdmin error:', err?.code, err?.message);
     }
   }
 

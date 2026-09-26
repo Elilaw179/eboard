@@ -5,6 +5,8 @@ import { getClassBySlug, CLASSES } from '@/types/class';
 import { getPublishedNotes } from '@/services/notes';
 import ClassNotesClient from './ClassNotesClient';
 
+export const revalidate = 60; // Revalidate every minute
+
 interface PageProps {
   params: {
     grade: string;

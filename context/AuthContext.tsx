@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { AdminUser, subscribeToAuth, loginWithEmail, logoutUser } from '@/lib/firebase/auth';
 
 interface AuthContextType {
@@ -19,9 +19,21 @@ const AuthContext = createContext<AuthContextType>({
   isAuthenticated: false,
 });
 
+// Detect synchronous localStorage session so we never start in a loading state
+function getInitialUser(): AdminUser | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = localStorage.getItem('eboard_demo_auth_session');
+    if (raw) return JSON.parse(raw) as AdminUser;
+  } catch {}
+  return null;
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<AdminUser | null>(null);
-  const [loading, setLoading] = useState(true);
+  const initialUser = useRef(getInitialUser());
+  const [user, setUser] = useState<AdminUser | null>(initialUser.current);
+  // If we already have a user from localStorage, we're not loading
+  const [loading, setLoading] = useState(!initialUser.current);
 
   useEffect(() => {
     const unsubscribe = subscribeToAuth((currentUser) => {

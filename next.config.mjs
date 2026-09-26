@@ -1,11 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  experimental: {
-    cpus: 1,
-    workerThreads: false,
-  },
   images: {
+    formats: ['image/avif', 'image/webp'],
+    minimumCacheTTL: 3600,
     remotePatterns: [
       {
         protocol: 'https',
@@ -17,6 +15,7 @@ const nextConfig = {
       },
     ],
   },
+  compress: true,
 };
 
 export default nextConfig;
