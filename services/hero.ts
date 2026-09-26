@@ -15,12 +15,14 @@ export interface HeroSettings {
   subheadline: string;
   supportingText: string;
   images: HeroImage[];
+  imageOpacity?: number; // 10 to 100 percentage
 }
 
 export const DEFAULT_HERO: HeroSettings = {
-  headline: 'ClassBoard',
+  headline: 'Lawtronic E-Board',
   subheadline: 'Your classroom notes, always within reach.',
   supportingText: 'Select your class to access your lessons, whiteboard summaries, and study notes.',
+  imageOpacity: 70,
   images: [
     {
       url: 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=800&q=80',
@@ -47,6 +49,7 @@ export async function getHeroSettings(): Promise<HeroSettings> {
         headline: data.headline || DEFAULT_HERO.headline,
         subheadline: data.subheadline || DEFAULT_HERO.subheadline,
         supportingText: data.supportingText || DEFAULT_HERO.supportingText,
+        imageOpacity: typeof data.imageOpacity === 'number' ? data.imageOpacity : (DEFAULT_HERO.imageOpacity ?? 70),
         images: Array.isArray(data.images) && data.images.length > 0
           ? data.images
           : DEFAULT_HERO.images,

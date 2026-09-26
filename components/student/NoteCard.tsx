@@ -1,8 +1,8 @@
 import React from 'react';
 import Link from 'next/link';
-import { Calendar, ArrowRight, BookOpen, Clock } from 'lucide-react';
+import { ArrowRight, BookOpen, Clock } from 'lucide-react';
 import { Note } from '@/types/note';
-import { formatDate, getReadingTime } from '@/lib/utils/format';
+import { timeAgo, formatDateTime, getReadingTime } from '@/lib/utils/format';
 
 interface NoteCardProps {
   note: Note;
@@ -10,7 +10,9 @@ interface NoteCardProps {
 }
 
 export default function NoteCard({ note, showClass = false }: NoteCardProps) {
-  const formattedDate = formatDate(note.createdAt);
+  const noteDate = note.createdAt || note.updatedAt;
+  const relativeTime = timeAgo(noteDate);
+  const fullDateTime = formatDateTime(noteDate);
   const readTime = getReadingTime(note.content);
 
   return (
@@ -43,15 +45,20 @@ export default function NoteCard({ note, showClass = false }: NoteCardProps) {
 
       {/* Card Footer */}
       <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between">
-        <div className="flex items-center gap-3 text-xs text-slate-400">
-          <span className="flex items-center gap-1.5">
-            <Calendar className="w-3.5 h-3.5 text-slate-400" />
-            {formattedDate}
+        <div className="flex items-center gap-3 text-xs text-slate-500 font-medium">
+          {/* Real-time publish clock */}
+          <span
+            className="flex items-center gap-1.5 text-slate-600 hover:text-blue-600 transition-colors cursor-default"
+            title={`Published: ${fullDateTime}`}
+          >
+            <Clock className="w-3.5 h-3.5 text-blue-500 flex-shrink-0" />
+            <span>{relativeTime}</span>
           </span>
-          <span>•</span>
-          <span className="flex items-center gap-1">
-            <Clock className="w-3.5 h-3.5 text-slate-400" />
-            {readTime}
+          <span className="text-slate-300">•</span>
+          {/* Estimated read length */}
+          <span className="flex items-center gap-1 text-slate-400">
+            <BookOpen className="w-3.5 h-3.5 flex-shrink-0" />
+            <span>{readTime}</span>
           </span>
         </div>
 

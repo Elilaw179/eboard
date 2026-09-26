@@ -79,19 +79,23 @@ export default function StudentNavbar() {
             <Link
               href="/"
               onClick={handleLogoClick}
-              className="flex items-center gap-2.5 group select-none cursor-pointer touch-manipulation"
-              title="ClassBoard"
+              className="flex items-center gap-2.5 sm:gap-3 group select-none cursor-pointer touch-manipulation"
+              title="Lawtronic Technologies — E-Board"
               prefetch={false}
             >
-              <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow-sm shadow-blue-500/20 group-hover:scale-105 active:scale-95 transition-transform">
-                <Presentation className="w-5 h-5" />
+              <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl overflow-hidden bg-white border border-slate-200/90 p-1 shadow-sm shadow-blue-500/10 group-hover:scale-105 active:scale-95 transition-transform flex items-center justify-center flex-shrink-0">
+                <img
+                  src="/logo.png"
+                  alt="Lawtronic Technologies Logo"
+                  className="w-full h-full object-contain"
+                />
               </div>
               <div>
-                <span className="font-bold text-xl tracking-tight text-slate-900 block leading-tight">
-                  Class<span className="text-blue-600">Board</span>
+                <span className="font-extrabold text-base sm:text-lg tracking-tight text-slate-900 block leading-tight">
+                  Lawtronic <span className="text-blue-600">E-Board</span>
                 </span>
-                <span className="text-[10px] uppercase font-semibold tracking-wider text-slate-400 block -mt-0.5">
-                  Digital Notes Portal
+                <span className="text-[9px] sm:text-[10px] uppercase font-bold tracking-wider text-slate-400 block -mt-0.5">
+                  Innovate • Automate • Elevate
                 </span>
               </div>
             </Link>

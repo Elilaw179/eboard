@@ -11,10 +11,15 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: 'ClassBoard — Student Notes Portal',
+  title: 'Lawtronic E-Board — Student Notes Portal',
   description: 'Your classroom notes, always within reach. Select your class to access lessons, whiteboard notes, and educational materials from Year 7 to Year 12.',
-  keywords: ['Classroom notes', 'Digital board', 'School notes', 'Year 10 notes', 'Computer Science', 'Physics', 'Mathematics'],
-  authors: [{ name: 'EBoard Education' }],
+  keywords: ['Lawtronic Technologies', 'Classroom notes', 'Digital board', 'School notes', 'Year 10 notes', 'Computer Science', 'Physics', 'Mathematics'],
+  authors: [{ name: 'Lawtronic Technologies' }],
+  icons: {
+    icon: '/logo.png',
+    shortcut: '/logo.png',
+    apple: '/logo.png',
+  },
 };
 
 export const viewport: Viewport = {

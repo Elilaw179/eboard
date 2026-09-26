@@ -47,13 +47,20 @@ export default function AdminLoginPage() {
 
         {/* Logo and Heading */}
         <div className="text-center">
-          <div className="w-14 h-14 rounded-2xl bg-blue-600 text-white flex items-center justify-center mx-auto shadow-lg shadow-blue-600/30 mb-4">
-            <Presentation className="w-7 h-7" />
+          <div className="w-20 h-20 rounded-2xl overflow-hidden bg-white p-1.5 mx-auto shadow-2xl shadow-blue-500/20 mb-4 border border-slate-700/80 flex items-center justify-center">
+            <img
+              src="/logo.png"
+              alt="Lawtronic Technologies Logo"
+              className="w-full h-full object-contain"
+            />
           </div>
           <h2 className="text-3xl font-extrabold text-white tracking-tight">
             Teacher Portal
           </h2>
-          <p className="mt-2 text-sm text-slate-400">
+          <p className="mt-1 text-xs font-bold text-blue-400 tracking-wider uppercase">
+            Lawtronic Technologies
+          </p>
+          <p className="mt-1 text-xs text-slate-400">
             Sign in to create, publish, and manage classroom notes
           </p>
         </div>

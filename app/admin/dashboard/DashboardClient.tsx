@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 import { Note } from '@/types/note';
 import { CLASSES } from '@/types/class';
-import { formatDate } from '@/lib/utils/format';
+import { formatDate, timeAgo, formatDateTime } from '@/lib/utils/format';
 import { getAllNotesForAdmin } from '@/services/notes';
 
 const CLASS_ICONS: Record<string, React.ElementType> = {
@@ -184,8 +184,11 @@ export default function DashboardClient({ initialNotes }: DashboardClientProps) 
                       </span>
                     )}
                   </td>
-                  <td className="px-6 py-4 text-slate-500 text-xs">
-                    {formatDate(note.createdAt)}
+                  <td className="px-6 py-4">
+                    <span className="text-xs text-slate-700 font-medium">{timeAgo(note.createdAt)}</span>
+                    <span className="block text-[11px] text-slate-400" title={formatDateTime(note.createdAt)}>
+                      {formatDate(note.createdAt)}
+                    </span>
                   </td>
                   <td className="px-6 py-4 text-right space-x-2">
                     <Link

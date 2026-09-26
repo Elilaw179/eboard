@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 import { Note } from '@/types/note';
 import { getNoteById } from '@/services/notes';
-import { formatDate, getReadingTime } from '@/lib/utils/format';
+import { formatDate, timeAgo, formatDateTime, getReadingTime } from '@/lib/utils/format';
 import CopyButton from '@/components/student/CopyButton';
 import ProjectorButton from '@/components/student/ProjectorButton';
 import BoardThemeToggle from '@/components/student/BoardThemeToggle';
@@ -282,15 +282,20 @@ export default function NoteReaderClient({ noteId }: NoteReaderClientProps) {
                 </span>
               </div>
 
-              <div className="flex items-center gap-3 text-xs text-slate-400 font-medium">
-                <span className="flex items-center gap-1.5">
-                  <Calendar className="w-3.5 h-3.5" />
-                  {formatDate(note.createdAt)}
+              <div className="flex flex-wrap items-center gap-3 text-xs text-slate-400 font-medium">
+                <span className="flex items-center gap-1.5" title={`Published: ${formatDateTime(note.createdAt)}`}>
+                  <Clock className="w-3.5 h-3.5 text-blue-400 flex-shrink-0" />
+                  <span>{timeAgo(note.createdAt)}</span>
                 </span>
                 <span>•</span>
                 <span className="flex items-center gap-1.5">
-                  <Clock className="w-3.5 h-3.5" />
-                  {getReadingTime(note.content)}
+                  <Calendar className="w-3.5 h-3.5 flex-shrink-0" />
+                  <span>{formatDate(note.createdAt)}</span>
+                </span>
+                <span>•</span>
+                <span className="flex items-center gap-1.5">
+                  <BookOpen className="w-3.5 h-3.5 flex-shrink-0" />
+                  <span>{getReadingTime(note.content)}</span>
                 </span>
               </div>
             </div>

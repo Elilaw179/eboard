@@ -1,31 +1,82 @@
 /**
- * Formats a Firebase Timestamp or Date into a student-friendly educational date
- * Example: "September 21, 2026"
+ * Converts a Firebase Timestamp or Date to a JS Date object.
+ * Returns null if the value cannot be parsed.
+ */
+function toDate(timestamp: any): Date | null {
+  if (!timestamp) return null;
+  if (typeof timestamp.toDate === 'function') return timestamp.toDate();
+  if (timestamp instanceof Date) return timestamp;
+  if (timestamp.seconds) return new Date(timestamp.seconds * 1000);
+  if (typeof timestamp === 'number' || typeof timestamp === 'string') {
+    const d = new Date(timestamp);
+    return isNaN(d.getTime()) ? null : d;
+  }
+  return null;
+}
+
+/**
+ * Formats a Firebase Timestamp or Date into a student-friendly educational date.
+ * Example: "26 September 2026"
  */
 export function formatDate(timestamp: any): string {
-  if (!timestamp) return 'Recent';
+  const date = toDate(timestamp);
+  if (!date) return 'Today';
 
-  let date: Date;
-
-  if (typeof timestamp.toDate === 'function') {
-    date = timestamp.toDate();
-  } else if (timestamp instanceof Date) {
-    date = timestamp;
-  } else if (typeof timestamp === 'number' || typeof timestamp === 'string') {
-    date = new Date(timestamp);
-  } else if (timestamp.seconds) {
-    date = new Date(timestamp.seconds * 1000);
-  } else {
-    return 'Recent';
-  }
-
-  if (isNaN(date.getTime())) return 'Recent';
-
-  return new Intl.DateTimeFormat('en-US', {
+  return new Intl.DateTimeFormat('en-GB', {
     month: 'long',
     day: 'numeric',
     year: 'numeric',
   }).format(date);
+}
+
+/**
+ * Formats a Firebase Timestamp or Date into an exact date and real-time clock string.
+ * Example: "26 Sep 2026, 6:35 PM"
+ */
+export function formatDateTime(timestamp: any): string {
+  const date = toDate(timestamp);
+  if (!date) return 'Just now';
+
+  return new Intl.DateTimeFormat('en-GB', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  }).format(date);
+}
+
+/**
+ * Returns a relative "time ago" string for a Firebase Timestamp or Date.
+ * Examples: "Just now", "5 mins ago", "2 hrs ago", "Yesterday", "3 days ago"
+ * Falls back to formatDateTime() for older dates.
+ */
+export function timeAgo(timestamp: any): string {
+  const date = toDate(timestamp);
+  if (!date) return 'Just now';
+
+  const now = Date.now();
+  const diffMs = now - date.getTime();
+
+  // If in the future by a few seconds due to slight clock drift, return Just now
+  if (diffMs < 0 && Math.abs(diffMs) < 60000) return 'Just now';
+  if (diffMs < 0) return formatDate(timestamp);
+
+  const seconds = Math.floor(diffMs / 1000);
+  const minutes = Math.floor(seconds / 60);
+  const hours = Math.floor(minutes / 60);
+  const days = Math.floor(hours / 24);
+
+  if (seconds < 45) return 'Just now';
+  if (minutes < 60) return `${minutes} min${minutes === 1 ? '' : 's'} ago`;
+  if (hours < 24) return `${hours} hr${hours === 1 ? '' : 's'} ago`;
+  if (days === 1) return 'Yesterday';
+  if (days < 7) return `${days} days ago`;
+  if (days < 30) return `${Math.floor(days / 7)} wk${Math.floor(days / 7) === 1 ? '' : 's'} ago`;
+
+  // Older than 30 days → show short date + time
+  return formatDateTime(timestamp);
 }
 
 /**

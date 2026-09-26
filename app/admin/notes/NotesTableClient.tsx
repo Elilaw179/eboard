@@ -19,7 +19,7 @@ import {
 import { Note, NoteStatus } from '@/types/note';
 import { CLASSES } from '@/types/class';
 import { toggleNoteStatus, deleteNote, getAllNotesForAdmin } from '@/services/notes';
-import { formatDate } from '@/lib/utils/format';
+import { formatDate, timeAgo, formatDateTime } from '@/lib/utils/format';
 import DeleteConfirmModal from '@/components/admin/DeleteConfirmModal';
 
 interface NotesTableClientProps {
@@ -198,12 +198,14 @@ export default function NotesTableClient({ initialNotes }: NotesTableClientProps
                       </button>
                     </td>
 
-                    <td className="px-6 py-4 text-xs text-slate-500">
-                      {formatDate(note.createdAt)}
+                    <td className="px-6 py-4">
+                      <div className="text-xs text-slate-800 font-medium">{formatDate(note.createdAt)}</div>
+                      <div className="text-[11px] text-slate-400" title={formatDateTime(note.createdAt)}>{timeAgo(note.createdAt)}</div>
                     </td>
 
-                    <td className="px-6 py-4 text-xs text-slate-400">
-                      {formatDate(note.updatedAt)}
+                    <td className="px-6 py-4">
+                      <div className="text-xs text-slate-800 font-medium">{timeAgo(note.updatedAt || note.createdAt)}</div>
+                      <div className="text-[11px] text-slate-400">{formatDateTime(note.updatedAt || note.createdAt)}</div>
                     </td>
 
                     <td className="px-6 py-4 text-right">

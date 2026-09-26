@@ -37,17 +37,21 @@ export default function AdminSidebar() {
   return (
     <aside className="w-64 bg-slate-900 text-slate-300 flex flex-col flex-shrink-0 h-screen sticky top-0 border-r border-slate-800">
       {/* Brand */}
-      <div className="p-6 border-b border-slate-800 flex items-center justify-between">
-        <Link href="/admin/dashboard" className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow-sm shadow-blue-500/20">
-            <Presentation className="w-5 h-5" />
+      <div className="p-5 border-b border-slate-800 flex items-center justify-between">
+        <Link href="/admin/dashboard" className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl overflow-hidden bg-white p-1 border border-slate-700 shadow-md flex items-center justify-center flex-shrink-0">
+            <img
+              src="/logo.png"
+              alt="Lawtronic Technologies"
+              className="w-full h-full object-contain"
+            />
           </div>
           <div>
-            <span className="font-bold text-lg text-white block leading-tight">
-              Class<span className="text-blue-400">Board</span>
+            <span className="font-bold text-base text-white block leading-tight">
+              Lawtronic <span className="text-blue-400">Admin</span>
             </span>
-            <span className="text-[10px] uppercase font-semibold tracking-wider text-slate-400 block">
-              Teacher Admin
+            <span className="text-[10px] uppercase font-semibold tracking-wider text-slate-400 block mt-0.5">
+              Teacher Portal
             </span>
           </div>
         </Link>

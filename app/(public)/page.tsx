@@ -2,7 +2,17 @@
 
 import React, { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
-import { Presentation, Clock, ArrowRight, Loader2, ChevronRight, BookOpen, GraduationCap, Users } from 'lucide-react';
+import {
+  Presentation,
+  Clock,
+  ArrowRight,
+  Loader2,
+  ChevronRight,
+  ChevronLeft,
+  BookOpen,
+  GraduationCap,
+  Users,
+} from 'lucide-react';
 import { CLASSES } from '@/types/class';
 import { getPublishedNotes } from '@/services/notes';
 import { getHeroSettings, HeroSettings, DEFAULT_HERO } from '@/services/hero';
@@ -15,181 +25,226 @@ export default function HomePage() {
   const [loadingNotes, setLoadingNotes] = useState(true);
   const [hero, setHero] = useState<HeroSettings>(DEFAULT_HERO);
   const [activeSlide, setActiveSlide] = useState(0);
-  const [slideTransition, setSlideTransition] = useState(true);
 
   // Fetch hero settings and notes in parallel
   useEffect(() => {
     Promise.all([
       getHeroSettings(),
       getPublishedNotes(),
-    ]).then(([heroData, notes]) => {
-      setHero(heroData);
-      setRecentNotes(notes);
-    }).catch(console.error)
+    ])
+      .then(([heroData, notes]) => {
+        setHero(heroData);
+        setRecentNotes(notes);
+      })
+      .catch(console.error)
       .finally(() => setLoadingNotes(false));
   }, []);
 
-  // Auto-advance hero image every 10 seconds
+  const totalImages = hero.images.length;
+
+  const nextSlide = useCallback(() => {
+    if (totalImages <= 1) return;
+    setActiveSlide((prev) => (prev + 1) % totalImages);
+  }, [totalImages]);
+
+  const prevSlide = useCallback(() => {
+    if (totalImages <= 1) return;
+    setActiveSlide((prev) => (prev - 1 + totalImages) % totalImages);
+  }, [totalImages]);
+
+  // Auto-advance hero background image every 10 seconds
   useEffect(() => {
-    if (hero.images.length < 2) return;
+    if (totalImages < 2) return;
     const interval = setInterval(() => {
-      setSlideTransition(false);
-      setTimeout(() => {
-        setActiveSlide((prev) => (prev + 1) % hero.images.length);
-        setSlideTransition(true);
-      }, 300);
+      nextSlide();
     }, 10000);
     return () => clearInterval(interval);
-  }, [hero.images.length]);
+  }, [totalImages, nextSlide]);
 
   const topNotes = recentNotes.slice(0, 4);
   const currentImage = hero.images[activeSlide] || DEFAULT_HERO.images[0];
 
   const stats = [
-    { icon: Users, label: 'Year Groups', value: '6' },
-    { icon: BookOpen, label: 'Subjects', value: '10+' },
-    { icon: GraduationCap, label: 'Digital Notes', value: `${recentNotes.length}` },
+    { icon: Users, label: 'Year Groups', value: '6 Classes' },
+    { icon: BookOpen, label: 'Curriculum', value: 'All Subjects' },
+    { icon: GraduationCap, label: 'Live Notes', value: `${recentNotes.length} Lessons` },
   ];
 
   return (
-    <div className="space-y-20 pb-20">
+    <div className="space-y-16 pb-20">
 
-      {/* ── HERO SECTION ─────────────────────────────────────────── */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-slate-900 via-blue-950 to-indigo-950 min-h-[560px] flex items-center">
+      {/* ── HERO SECTION WITH FULL BACKGROUND IMAGE ──────────────── */}
+      <section className="relative overflow-hidden bg-slate-950 min-h-[580px] sm:min-h-[640px] flex items-center justify-center">
 
-        {/* Animated background pattern */}
+        {/* 1. Full-bleed background images with cross-fade and dynamic opacity */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
-          {/* Grid dots */}
-          <div className="absolute inset-0 opacity-[0.07]"
-            style={{ backgroundImage: 'radial-gradient(circle, #60a5fa 1px, transparent 1px)', backgroundSize: '40px 40px' }}
-          />
-          {/* Glowing orbs */}
-          <div className="absolute -top-32 -left-32 w-96 h-96 rounded-full bg-blue-500/20 blur-3xl animate-pulse" />
-          <div className="absolute -bottom-32 -right-32 w-96 h-96 rounded-full bg-indigo-500/20 blur-3xl animate-pulse" style={{ animationDelay: '2s' }} />
-          <div className="absolute top-1/2 left-1/3 w-64 h-64 rounded-full bg-cyan-500/10 blur-3xl animate-pulse" style={{ animationDelay: '4s' }} />
+          {hero.images.map((img, idx) => (
+            <div
+              key={idx}
+              className={`absolute inset-0 transition-all duration-1000 ease-in-out transform ${
+                idx === activeSlide
+                  ? 'scale-100'
+                  : 'scale-105 pointer-events-none'
+              }`}
+              style={{
+                opacity: idx === activeSlide ? ((hero.imageOpacity ?? 70) / 100) : 0,
+              }}
+            >
+              <img
+                src={img.url}
+                alt={img.alt || 'Classroom hero background'}
+                className="w-full h-full object-cover object-center"
+              />
+            </div>
+          ))}
         </div>
 
-        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 w-full">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+        {/* 2. Layered dark and educational glass gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-r from-slate-950/95 via-slate-950/85 to-slate-950/70" />
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-slate-950/60" />
+        <div className="absolute inset-0 backdrop-blur-[1px]" />
 
-            {/* LEFT: Text Content */}
-            <div className="text-white space-y-6">
-              {/* Pill badge */}
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-500/20 border border-blue-400/30 backdrop-blur-sm text-blue-300 text-xs font-semibold tracking-wide">
-                <Presentation className="w-3.5 h-3.5" />
-                Digital Classroom Platform
-              </div>
+        {/* 3. Subtle ambient glow and pattern overlay */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          <div
+            className="absolute inset-0 opacity-[0.06]"
+            style={{
+              backgroundImage: 'radial-gradient(circle, #60a5fa 1px, transparent 1px)',
+              backgroundSize: '36px 36px',
+            }}
+          />
+          <div className="absolute -top-24 -left-24 w-96 h-96 rounded-full bg-blue-500/20 blur-3xl pointer-events-none" />
+          <div className="absolute -bottom-24 right-1/4 w-96 h-96 rounded-full bg-indigo-500/20 blur-3xl pointer-events-none" />
+        </div>
 
-              {/* Headline */}
-              <h1 className="text-4xl sm:text-5xl md:text-6xl font-black tracking-tight leading-[1.1]">
-                {hero.headline.includes('Board') ? (
-                  <>
-                    {hero.headline.split('Board')[0]}
-                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-400">
-                      Board
-                    </span>
-                    {hero.headline.split('Board')[1]}
-                  </>
-                ) : (
-                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-400">
-                    {hero.headline}
-                  </span>
-                )}
-              </h1>
+        {/* 4. Floating Hero Content */}
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-24 w-full">
+          <div className="max-w-3xl text-white space-y-6">
 
-              {/* Sub-headline */}
-              <p className="text-xl sm:text-2xl text-blue-100/90 font-medium leading-snug">
-                &ldquo;{hero.subheadline}&rdquo;
-              </p>
-
-              {/* Supporting text */}
-              <p className="text-base text-slate-300/80 max-w-md leading-relaxed">
-                {hero.supportingText}
-              </p>
-
-              {/* CTA Buttons */}
-              <div className="flex flex-col sm:flex-row gap-3 pt-2">
-                <Link
-                  href="/classes"
-                  className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-blue-500 hover:bg-blue-400 text-white font-bold rounded-2xl text-sm shadow-lg shadow-blue-500/30 transition-all hover:scale-105 active:scale-95"
-                >
-                  Browse Classes
-                  <ChevronRight className="w-4 h-4" />
-                </Link>
-                <Link
-                  href="#recent"
-                  className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-white/10 hover:bg-white/20 text-white font-semibold rounded-2xl text-sm border border-white/20 backdrop-blur-sm transition-all"
-                >
-                  Recent Notes
-                </Link>
-              </div>
-
-              {/* Live stats */}
-              <div className="flex items-center gap-6 pt-4 border-t border-white/10">
-                {stats.map(({ icon: Icon, label, value }) => (
-                  <div key={label} className="text-center">
-                    <p className="text-2xl font-black text-white">{value}</p>
-                    <p className="text-[11px] text-slate-400 font-medium">{label}</p>
-                  </div>
-                ))}
-              </div>
+            {/* Floating Pill Badge with Company Logo */}
+            <div className="inline-flex items-center gap-2.5 px-3.5 py-1.5 rounded-full bg-blue-500/20 border border-blue-400/30 backdrop-blur-md text-blue-300 text-xs font-semibold tracking-wide shadow-lg">
+              <img
+                src="/logo.png"
+                alt="Lawtronic Technologies Logo"
+                className="w-4 h-4 rounded-full object-contain bg-white flex-shrink-0"
+              />
+              <span>Lawtronic Technologies</span>
+              <span className="text-blue-400/60">•</span>
+              <span className="text-slate-300">Digital Classroom Platform</span>
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse ml-0.5" />
             </div>
 
-            {/* RIGHT: Animated Image Card */}
-            <div className="relative hidden lg:block">
-              {/* Image container with glassmorphism frame */}
-              <div className="relative rounded-3xl overflow-hidden shadow-2xl border border-white/10 aspect-[4/3]">
-                {/* Actual image */}
-                <img
-                  key={activeSlide}
-                  src={currentImage.url}
-                  alt={currentImage.alt}
-                  className="w-full h-full object-cover"
-                  style={{
-                    opacity: slideTransition ? 1 : 0,
-                    transition: 'opacity 0.4s ease-in-out',
-                  }}
-                />
+            {/* Headline */}
+            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black tracking-tight leading-[1.08] text-white drop-shadow-md">
+              {hero.headline.includes('Board') ? (
+                <>
+                  {hero.headline.split('Board')[0]}
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-cyan-300 to-sky-400">
+                    Board
+                  </span>
+                  {hero.headline.split('Board')[1]}
+                </>
+              ) : (
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-cyan-300 to-sky-400">
+                  {hero.headline}
+                </span>
+              )}
+            </h1>
 
-                {/* Gradient overlay */}
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 via-transparent to-transparent" />
+            {/* Sub-headline */}
+            <p className="text-xl sm:text-2xl md:text-3xl text-blue-100 font-semibold leading-snug drop-shadow-sm max-w-3xl">
+              &ldquo;{hero.subheadline}&rdquo;
+            </p>
 
-                {/* Caption overlay */}
-                <div className="absolute bottom-4 left-4 right-4">
-                  <p className="text-white text-xs font-semibold bg-black/40 backdrop-blur-md rounded-xl px-3 py-2 border border-white/10">
-                    {currentImage.alt}
-                  </p>
+            {/* Supporting text */}
+            <p className="text-base sm:text-lg text-slate-300/90 max-w-2xl leading-relaxed">
+              {hero.supportingText}
+            </p>
+
+            {/* CTA Buttons */}
+            <div className="flex flex-wrap gap-4 pt-2">
+              <Link
+                href="/classes"
+                className="inline-flex items-center justify-center gap-2 px-7 py-3.5 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-2xl text-sm shadow-xl shadow-blue-600/30 transition-all hover:scale-105 active:scale-95"
+              >
+                <span>Browse Classes</span>
+                <ChevronRight className="w-4 h-4" />
+              </Link>
+              <Link
+                href="#recent"
+                className="inline-flex items-center justify-center gap-2 px-7 py-3.5 bg-white/10 hover:bg-white/20 text-white font-semibold rounded-2xl text-sm border border-white/20 backdrop-blur-md transition-all hover:scale-105 active:scale-95 shadow-lg"
+              >
+                <Clock className="w-4 h-4 text-blue-300" />
+                <span>Recent Notes</span>
+              </Link>
+            </div>
+
+            {/* Floating Quick Stats */}
+            <div className="grid grid-cols-3 gap-3 pt-6 border-t border-white/10 max-w-lg">
+              {stats.map(({ icon: Icon, label, value }) => (
+                <div
+                  key={label}
+                  className="p-3 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md text-left"
+                >
+                  <Icon className="w-4 h-4 text-blue-400 mb-1" />
+                  <p className="text-base sm:text-lg font-bold text-white leading-tight">{value}</p>
+                  <p className="text-[11px] text-slate-400 font-medium">{label}</p>
                 </div>
-
-                {/* Slide dots */}
-                {hero.images.length > 1 && (
-                  <div className="absolute top-4 right-4 flex gap-1.5">
-                    {hero.images.map((_, i) => (
-                      <button
-                        key={i}
-                        onClick={() => { setSlideTransition(false); setTimeout(() => { setActiveSlide(i); setSlideTransition(true); }, 200); }}
-                        className={`rounded-full transition-all duration-300 ${
-                          i === activeSlide
-                            ? 'w-6 h-2 bg-white'
-                            : 'w-2 h-2 bg-white/40 hover:bg-white/70'
-                        }`}
-                      />
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Floating decorative cards */}
-              <div className="absolute -top-4 -right-4 bg-blue-500/90 backdrop-blur-md rounded-2xl px-4 py-3 shadow-xl border border-blue-400/30 text-white">
-                <p className="text-[10px] font-semibold text-blue-200 uppercase tracking-wider">Year Groups</p>
-                <p className="text-2xl font-black">Y7 — Y12</p>
-              </div>
-              <div className="absolute -bottom-4 -left-4 bg-indigo-600/90 backdrop-blur-md rounded-2xl px-4 py-3 shadow-xl border border-indigo-400/30 text-white">
-                <p className="text-[10px] font-semibold text-indigo-200 uppercase tracking-wider">Updated</p>
-                <p className="text-sm font-bold">Every lesson</p>
-              </div>
+              ))}
             </div>
           </div>
+        </div>
+
+        {/* 5. Bottom Navigation Bar for Rotating Background Images */}
+        <div className="absolute bottom-6 left-0 right-0 z-20 px-4 sm:px-8 flex items-center justify-between max-w-7xl mx-auto pointer-events-auto">
+          {/* Active image caption overlay */}
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-slate-950/60 backdrop-blur-md border border-white/15 text-white text-xs font-medium max-w-xs sm:max-w-md truncate shadow-lg">
+            <span className="w-2 h-2 rounded-full bg-blue-400 flex-shrink-0" />
+            <span className="truncate">{currentImage.alt || 'Classroom preview'}</span>
+            {totalImages > 1 && (
+              <span className="text-[10px] text-blue-300 font-mono flex-shrink-0 ml-1">
+                ({activeSlide + 1}/{totalImages})
+              </span>
+            )}
+          </div>
+
+          {/* Slide Indicator Dots and Arrows */}
+          {totalImages > 1 && (
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={prevSlide}
+                className="p-1.5 rounded-lg bg-slate-950/60 hover:bg-slate-800/80 text-white/80 hover:text-white backdrop-blur-md border border-white/15 transition shadow-lg"
+                title="Previous image"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+
+              <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-slate-950/60 backdrop-blur-md border border-white/15">
+                {hero.images.map((_, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setActiveSlide(i)}
+                    className={`rounded-full transition-all duration-300 ${
+                      i === activeSlide
+                        ? 'w-6 h-2 bg-blue-400'
+                        : 'w-2 h-2 bg-white/40 hover:bg-white/70'
+                    }`}
+                    title={`Go to slide ${i + 1}`}
+                  />
+                ))}
+              </div>
+
+              <button
+                type="button"
+                onClick={nextSlide}
+                className="p-1.5 rounded-lg bg-slate-950/60 hover:bg-slate-800/80 text-white/80 hover:text-white backdrop-blur-md border border-white/15 transition shadow-lg"
+                title="Next image"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+          )}
         </div>
       </section>
 
@@ -233,7 +288,7 @@ export default function HomePage() {
                 <div>
                   <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Recently Posted Notes</h2>
                   <p className="text-xs sm:text-sm text-slate-500">
-                    Latest classroom updates published by your teachers
+                    Latest classroom updates published by your teachers in real time
                   </p>
                 </div>
               </div>
