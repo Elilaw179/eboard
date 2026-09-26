@@ -18,7 +18,7 @@ import {
 import { Note } from '@/types/note';
 import { CLASSES } from '@/types/class';
 import { formatDate } from '@/lib/utils/format';
-import { getLocalNotes } from '@/services/notes';
+import { getAllNotesForAdmin } from '@/services/notes';
 
 const CLASS_ICONS: Record<string, React.ElementType> = {
   'Year 7': Sparkles,
@@ -36,25 +36,12 @@ interface DashboardClientProps {
 export default function DashboardClient({ initialNotes }: DashboardClientProps) {
   const [notes, setNotes] = useState<Note[]>(initialNotes);
 
+  // Fetch fresh data from Firestore on mount so metrics are always accurate
   useEffect(() => {
-    const local = getLocalNotes();
-    if (local && local.length > 0) {
-      setNotes((prev) => {
-        const map = new Map<string, Note>();
-        prev.forEach((n) => map.set(n.id, n));
-        local.forEach((n) => map.set(n.id, n));
-        return Array.from(map.values()).sort((a, b) => {
-          const timeA = (a.createdAt as any)?.seconds
-            ? (a.createdAt as any).seconds * 1000
-            : new Date(a.createdAt).getTime();
-          const timeB = (b.createdAt as any)?.seconds
-            ? (b.createdAt as any).seconds * 1000
-            : new Date(b.createdAt).getTime();
-          return timeB - timeA;
-        });
-      });
-    }
-  }, [initialNotes]);
+    getAllNotesForAdmin()
+      .then((fresh) => setNotes(fresh))
+      .catch(console.error);
+  }, []);
 
   const totalNotes = notes.length;
   const publishedNotes = notes.filter((n) => n.status === 'published').length;

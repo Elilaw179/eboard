@@ -15,34 +15,35 @@ import {
   ZoomIn,
   ZoomOut,
   Sparkles,
+  Loader2,
 } from 'lucide-react';
 import { Note } from '@/types/note';
+import { getNoteById } from '@/services/notes';
 import { formatDate, getReadingTime } from '@/lib/utils/format';
 import CopyButton from '@/components/student/CopyButton';
 import ProjectorButton from '@/components/student/ProjectorButton';
 import BoardThemeToggle from '@/components/student/BoardThemeToggle';
 
 interface NoteReaderClientProps {
-  note: Note;
+  noteId: string;
 }
 
-export default function NoteReaderClient({ note }: NoteReaderClientProps) {
+export default function NoteReaderClient({ noteId }: NoteReaderClientProps) {
+  const [note, setNote] = useState<Note | null>(null);
+  const [loadingNote, setLoadingNote] = useState(true);
   const [boardTheme, setBoardTheme] = useState<'white' | 'black'>('white');
   const [isFocusMode, setIsFocusMode] = useState(false);
   const [fontSize, setFontSize] = useState<'normal' | 'large' | 'xlarge'>('normal');
   const [linkCopied, setLinkCopied] = useState(false);
 
-  // Load saved board theme from localStorage
+  // Fetch note from Firestore on mount
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem('eboard-theme') as 'white' | 'black' | null;
-      if (saved === 'white' || saved === 'black') {
-        setBoardTheme(saved);
-      }
-    } catch {
-      // ignore in environments without localStorage
-    }
-  }, []);
+    setLoadingNote(true);
+    getNoteById(noteId)
+      .then((data) => setNote(data))
+      .catch(console.error)
+      .finally(() => setLoadingNote(false));
+  }, [noteId]);
 
   const handleBoardThemeChange = (theme: 'white' | 'black') => {
     setBoardTheme(theme);
@@ -88,6 +89,34 @@ export default function NoteReaderClient({ note }: NoteReaderClientProps) {
     large: 'text-lg sm:text-xl leading-loose',
     xlarge: 'text-xl sm:text-2xl leading-loose',
   };
+
+  // Loading state
+  if (loadingNote) {
+    return (
+      <div className="min-h-screen bg-slate-100/90 flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3 text-slate-400">
+          <Loader2 className="w-10 h-10 animate-spin text-blue-500" />
+          <span className="text-sm">Loading note from Firestore...</span>
+        </div>
+      </div>
+    );
+  }
+
+  // Not found state
+  if (!note) {
+    return (
+      <div className="min-h-screen bg-slate-100/90 flex items-center justify-center">
+        <div className="text-center">
+          <BookOpen className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+          <h2 className="text-xl font-bold text-slate-700 mb-2">Note Not Found</h2>
+          <p className="text-slate-400 text-sm mb-6">This note may have been deleted or is not yet published.</p>
+          <Link href="/" className="px-5 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-semibold hover:bg-blue-700 transition">
+            Back to ClassBoard
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   const isBlackboard = boardTheme === 'black';
 

@@ -11,24 +11,51 @@ import {
   CheckCircle,
   AlertCircle,
   Sparkles,
+  Loader2,
 } from 'lucide-react';
 import { ClassGrade, CLASSES } from '@/types/class';
 import { Note, NoteFormData, NoteStatus } from '@/types/note';
 import { DEFAULT_SUBJECTS } from '@/types/subject';
-import { createNote, updateNote } from '@/services/notes';
+import { createNote, updateNote, getNoteById } from '@/services/notes';
 import { getAllSubjects, createSubject } from '@/services/subjects';
 import TipTapEditor from '@/components/editor/TipTapEditor';
 
 interface NoteEditorFormProps {
-  initialNote?: Note;
+  noteId?: string;       // Pass for editing
+  initialNote?: Note;   // Optional pre-loaded note (deprecated, kept for compatibility)
   isEditing?: boolean;
 }
 
 export default function NoteEditorForm({
-  initialNote,
+  noteId,
+  initialNote: initialNoteProp,
   isEditing = false,
 }: NoteEditorFormProps) {
   const router = useRouter();
+
+  const [loadingNote, setLoadingNote] = useState(isEditing && !!noteId);
+  const [initialNote, setInitialNote] = useState<Note | undefined>(initialNoteProp);
+
+  // When editing via noteId, fetch the note from Firestore on mount
+  useEffect(() => {
+    if (isEditing && noteId && !initialNoteProp) {
+      setLoadingNote(true);
+      getNoteById(noteId)
+        .then((note) => {
+          if (note) {
+            setInitialNote(note);
+            setTitle(note.title);
+            setClassName(note.className);
+            setSubject(note.subject);
+            setContent(note.content);
+            setStatus(note.status);
+          }
+        })
+        .catch(console.error)
+        .finally(() => setLoadingNote(false));
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [noteId]);
 
   const [title, setTitle] = useState(initialNote?.title || '');
   const [className, setClassName] = useState<ClassGrade>(
@@ -124,6 +151,16 @@ export default function NoteEditorForm({
       setIsSaving(false);
     }
   };
+
+  // Show loading spinner while fetching note for editing
+  if (loadingNote) {
+    return (
+      <div className="flex items-center justify-center py-24">
+        <Loader2 className="w-8 h-8 animate-spin text-blue-500 mr-3" />
+        <span className="text-slate-500 text-sm">Loading note from Firestore...</span>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-6xl mx-auto p-4 sm:p-8 space-y-6">

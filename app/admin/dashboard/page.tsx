@@ -1,13 +1,8 @@
 import React from 'react';
-import { getAllNotesForAdmin } from '@/services/notes';
 import AdminHeader from '@/components/admin/AdminHeader';
 import DashboardClient from './DashboardClient';
 
-export const revalidate = 0; // Dynamic for real-time dashboard accuracy
-
-export default async function AdminDashboardPage() {
-  const notes = await getAllNotesForAdmin();
-
+export default function AdminDashboardPage() {
   return (
     <div className="flex-1 pb-12">
       <AdminHeader
@@ -18,7 +13,7 @@ export default async function AdminDashboardPage() {
           href: '/admin/notes/new',
         }}
       />
-      <DashboardClient initialNotes={notes} />
+      <DashboardClient initialNotes={[]} />
     </div>
   );
 }

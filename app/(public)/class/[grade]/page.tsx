@@ -1,11 +1,8 @@
 import React from 'react';
-import { notFound } from 'next/navigation';
 import { Metadata } from 'next';
 import { getClassBySlug, CLASSES } from '@/types/class';
-import { getPublishedNotes } from '@/services/notes';
+import { notFound } from 'next/navigation';
 import ClassNotesClient from './ClassNotesClient';
-
-export const revalidate = 60; // Revalidate every minute
 
 interface PageProps {
   params: {
@@ -30,14 +27,13 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   };
 }
 
-export default async function ClassPage({ params }: PageProps) {
+export default function ClassPage({ params }: PageProps) {
   const classDef = getClassBySlug(params.grade);
 
   if (!classDef) {
     notFound();
   }
 
-  const notes = await getPublishedNotes({ classSlug: classDef.slug });
-
-  return <ClassNotesClient classDef={classDef} initialNotes={notes} />;
+  // Data is fetched client-side inside ClassNotesClient using Firestore
+  return <ClassNotesClient classDef={classDef} />;
 }

@@ -1,7 +1,5 @@
 import React from 'react';
-import { notFound } from 'next/navigation';
 import { Metadata } from 'next';
-import { getNoteById } from '@/services/notes';
 import NoteReaderClient from './NoteReaderClient';
 
 interface PageProps {
@@ -11,22 +9,14 @@ interface PageProps {
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  const note = await getNoteById(params.id);
-  if (!note) {
-    return { title: 'Note Not Found — ClassBoard' };
-  }
+  // Basic metadata — NoteReaderClient will load the full note from Firestore
   return {
-    title: `${note.title} — ${note.className} ${note.subject} — ClassBoard`,
-    description: note.plainTextPreview || `Classroom note on ${note.title} for ${note.className} students.`,
+    title: 'Loading Note — ClassBoard',
+    description: 'Classroom note from ClassBoard digital notes portal.',
   };
 }
 
-export default async function NotePage({ params }: PageProps) {
-  const note = await getNoteById(params.id);
-
-  if (!note) {
-    notFound();
-  }
-
-  return <NoteReaderClient note={note} />;
+export default function NotePage({ params }: PageProps) {
+  // The note is fetched client-side by NoteReaderClient
+  return <NoteReaderClient noteId={params.id} />;
 }

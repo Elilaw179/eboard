@@ -12,6 +12,7 @@ import {
   LogOut,
   Presentation,
   ExternalLink,
+  Image as ImageIcon,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 
@@ -30,6 +31,7 @@ export default function AdminSidebar() {
     { name: 'Notes', href: '/admin/notes', icon: FileText },
     { name: 'Create Note', href: '/admin/notes/new', icon: FilePlus },
     { name: 'Subjects', href: '/admin/subjects', icon: BookMarked },
+    { name: 'Hero Settings', href: '/admin/hero', icon: ImageIcon },
   ];
 
   return (

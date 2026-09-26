@@ -14,10 +14,11 @@ import {
   Eye,
   FileCheck,
   FileText,
+  Loader2,
 } from 'lucide-react';
 import { Note, NoteStatus } from '@/types/note';
 import { CLASSES } from '@/types/class';
-import { toggleNoteStatus, deleteNote, getLocalNotes } from '@/services/notes';
+import { toggleNoteStatus, deleteNote, getAllNotesForAdmin } from '@/services/notes';
 import { formatDate } from '@/lib/utils/format';
 import DeleteConfirmModal from '@/components/admin/DeleteConfirmModal';
 
@@ -27,27 +28,15 @@ interface NotesTableClientProps {
 
 export default function NotesTableClient({ initialNotes }: NotesTableClientProps) {
   const [notes, setNotes] = useState<Note[]>(initialNotes);
+  const [loading, setLoading] = useState(true);
 
+  // Always fetch fresh data from Firestore on mount
   useEffect(() => {
-    // Merge any locally stored notes so that newly created notes are immediately visible
-    const local = getLocalNotes();
-    if (local && local.length > 0) {
-      setNotes((prev) => {
-        const map = new Map<string, Note>();
-        prev.forEach((n) => map.set(n.id, n));
-        local.forEach((n) => map.set(n.id, n));
-        return Array.from(map.values()).sort((a, b) => {
-          const timeA = (a.createdAt as any)?.seconds
-            ? (a.createdAt as any).seconds * 1000
-            : new Date(a.createdAt).getTime();
-          const timeB = (b.createdAt as any)?.seconds
-            ? (b.createdAt as any).seconds * 1000
-            : new Date(b.createdAt).getTime();
-          return timeB - timeA;
-        });
-      });
-    }
-  }, [initialNotes]);
+    getAllNotesForAdmin()
+      .then((fresh) => setNotes(fresh))
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  }, []);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedClass, setSelectedClass] = useState('All');
@@ -219,33 +208,36 @@ export default function NotesTableClient({ initialNotes }: NotesTableClientProps
 
                     <td className="px-6 py-4 text-right">
                       <div className="inline-flex items-center gap-2">
-                        {/* View in Reader */}
+                        {/* View */}
                         <Link
                           href={`/note/${note.id}`}
                           target="_blank"
-                          className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition"
+                          className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition"
                           title="Open in Digital Board"
                         >
-                          <Eye className="w-4 h-4" />
+                          <Eye className="w-3.5 h-3.5" />
+                          <span>View</span>
                         </Link>
 
                         {/* Edit */}
                         <Link
                           href={`/admin/notes/${note.id}/edit`}
-                          className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition"
+                          className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition"
                           title="Edit Note"
                         >
-                          <Edit className="w-4 h-4" />
+                          <Edit className="w-3.5 h-3.5" />
+                          <span>Edit</span>
                         </Link>
 
                         {/* Delete */}
                         <button
                           type="button"
                           onClick={() => setDeleteTarget(note)}
-                          className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition"
+                          className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition"
                           title="Delete Note"
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <Trash2 className="w-3.5 h-3.5" />
+                          <span>Delete</span>
                         </button>
                       </div>
                     </td>

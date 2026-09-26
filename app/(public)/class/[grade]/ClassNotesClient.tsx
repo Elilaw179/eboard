@@ -1,34 +1,45 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Search, BookOpen, Sparkles, Filter } from 'lucide-react';
+import { ArrowLeft, Search, BookOpen, Loader2 } from 'lucide-react';
 import { ClassDefinition } from '@/types/class';
 import { Note } from '@/types/note';
+import { getPublishedNotes } from '@/services/notes';
 import SubjectFilter from '@/components/student/SubjectFilter';
 import NoteCard from '@/components/student/NoteCard';
 
 interface ClassNotesClientProps {
   classDef: ClassDefinition;
-  initialNotes: Note[];
 }
 
-export default function ClassNotesClient({ classDef, initialNotes }: ClassNotesClientProps) {
+export default function ClassNotesClient({ classDef }: ClassNotesClientProps) {
+  const [notes, setNotes] = useState<Note[]>([]);
+  const [loading, setLoading] = useState(true);
   const [selectedSubject, setSelectedSubject] = useState<string>('All');
   const [searchQuery, setSearchQuery] = useState<string>('');
+
+  // Fetch from Firestore on mount
+  useEffect(() => {
+    setLoading(true);
+    getPublishedNotes({ classSlug: classDef.slug })
+      .then((data) => setNotes(data))
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  }, [classDef.slug]);
 
   // Extract unique subjects from actual notes in this class
   const availableSubjects = useMemo(() => {
     const subs = new Set<string>();
-    initialNotes.forEach((n) => {
+    notes.forEach((n) => {
       if (n.subject) subs.add(n.subject.trim());
     });
     return Array.from(subs).sort();
-  }, [initialNotes]);
+  }, [notes]);
 
   // Filter notes by selected subject and search query
   const filteredNotes = useMemo(() => {
-    return initialNotes.filter((note) => {
+    return notes.filter((note) => {
       const matchesSubject =
         selectedSubject === 'All' || note.subject.toLowerCase() === selectedSubject.toLowerCase();
 
@@ -41,7 +52,7 @@ export default function ClassNotesClient({ classDef, initialNotes }: ClassNotesC
 
       return matchesSubject && matchesSearch;
     });
-  }, [initialNotes, selectedSubject, searchQuery]);
+  }, [notes, selectedSubject, searchQuery]);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
@@ -75,9 +86,13 @@ export default function ClassNotesClient({ classDef, initialNotes }: ClassNotesC
             <span className="text-xs font-semibold text-slate-400 block uppercase tracking-wider">
               Available Lessons
             </span>
-            <span className="text-3xl font-black text-blue-600">
-              {initialNotes.length}
-            </span>
+            {loading ? (
+              <Loader2 className="w-6 h-6 animate-spin text-blue-500 mt-1" />
+            ) : (
+              <span className="text-3xl font-black text-blue-600">
+                {notes.length}
+              </span>
+            )}
           </div>
         </div>
 
@@ -113,15 +128,20 @@ export default function ClassNotesClient({ classDef, initialNotes }: ClassNotesC
         </div>
       </div>
 
-      {/* Notes Grid or Empty State */}
-      {filteredNotes.length > 0 ? (
+      {/* Loading State */}
+      {loading ? (
+        <div className="flex items-center justify-center py-20">
+          <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+          <span className="ml-3 text-slate-500 text-sm">Loading notes from Firestore...</span>
+        </div>
+      ) : filteredNotes.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredNotes.map((note) => (
             <NoteCard key={note.id} note={note} />
           ))}
         </div>
       ) : (
-        /* Friendly Empty State (Section 33) */
+        /* Friendly Empty State */
         <div className="bg-white rounded-3xl p-12 text-center border border-slate-200/80 shadow-sm max-w-xl mx-auto my-12">
           <div className="w-16 h-16 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center mx-auto mb-4">
             <BookOpen className="w-8 h-8" />
