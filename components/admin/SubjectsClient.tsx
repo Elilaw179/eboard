@@ -137,7 +137,7 @@ export default function SubjectsClient() {
   };
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-8">
+    <div className="p-4 sm:p-6 max-w-7xl mx-auto space-y-6 sm:space-y-8">
 
       {/* Error banner */}
       {error && (
@@ -151,12 +151,12 @@ export default function SubjectsClient() {
       )}
 
       {/* ── ADD NEW ── */}
-      <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
+      <div className="bg-white rounded-2xl p-4 sm:p-6 border border-slate-200 shadow-sm">
         <h3 className="text-base font-bold text-slate-900 mb-1">Add Academic Subject</h3>
         <p className="text-xs text-slate-500 mb-4">
           Add a new subject to make it available in the lesson creator and student filter pills.
         </p>
-        <form onSubmit={handleAdd} className="flex gap-3 max-w-md">
+        <form onSubmit={handleAdd} className="flex flex-col sm:flex-row gap-3 max-w-lg">
           <input
             type="text"
             placeholder="e.g. Design & Technology, Economics..."
@@ -167,7 +167,7 @@ export default function SubjectsClient() {
           <button
             type="submit"
             disabled={isAdding || !newName.trim()}
-            className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-xs font-semibold rounded-xl transition shadow-sm"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-xs font-semibold rounded-xl transition shadow-sm active:scale-95"
           >
             {isAdding ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
             Add Subject

@@ -174,7 +174,7 @@ export default function NoteEditorForm({
           Back to Notes List
         </Link>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3 w-full sm:w-auto">
           {isEditing && initialNote && (
             <Link
               href={`/note/${initialNote.id}`}
@@ -190,7 +190,7 @@ export default function NoteEditorForm({
             type="button"
             disabled={isSaving}
             onClick={() => handleSave('draft')}
-            className="inline-flex items-center gap-1.5 px-4 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 rounded-xl text-xs font-semibold shadow-sm transition disabled:opacity-50"
+            className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 rounded-xl text-xs font-semibold shadow-sm transition disabled:opacity-50"
           >
             <Save className="w-3.5 h-3.5 text-slate-500" />
             <span>Save Draft</span>
@@ -200,7 +200,7 @@ export default function NoteEditorForm({
             type="button"
             disabled={isSaving}
             onClick={() => handleSave('published')}
-            className="inline-flex items-center gap-2 px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold shadow-md shadow-blue-500/25 transition disabled:opacity-50"
+            className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold shadow-md shadow-blue-500/25 transition disabled:opacity-50"
           >
             <Send className="w-3.5 h-3.5" />
             <span>Publish Note</span>
@@ -320,12 +320,12 @@ export default function NoteEditorForm({
       </div>
 
       {/* Bottom Save bar */}
-      <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-200">
+      <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-3 pt-4 border-t border-slate-200">
         <button
           type="button"
           disabled={isSaving}
           onClick={() => handleSave('draft')}
-          className="px-5 py-2.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 rounded-xl text-sm font-semibold shadow-sm transition disabled:opacity-50"
+          className="w-full sm:w-auto inline-flex items-center justify-center px-5 py-2.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 rounded-xl text-sm font-semibold shadow-sm transition disabled:opacity-50"
         >
           Save Draft
         </button>
@@ -333,7 +333,7 @@ export default function NoteEditorForm({
           type="button"
           disabled={isSaving}
           onClick={() => handleSave('published')}
-          className="inline-flex items-center gap-2 px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-semibold shadow-md shadow-blue-500/25 transition disabled:opacity-50"
+          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-semibold shadow-md shadow-blue-500/25 transition disabled:opacity-50 active:scale-95"
         >
           <Send className="w-4 h-4" />
           <span>Publish Note to Class</span>

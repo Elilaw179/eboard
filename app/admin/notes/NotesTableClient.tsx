@@ -87,27 +87,27 @@ export default function NotesTableClient({ initialNotes }: NotesTableClientProps
   });
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-6">
+    <div className="p-4 sm:p-6 max-w-7xl mx-auto space-y-4 sm:space-y-6">
       {/* Action and Filter Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-3 flex-wrap flex-1">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3 flex-1">
           {/* Search Input */}
-          <div className="relative w-full sm:w-64">
+          <div className="relative">
             <input
               type="text"
               placeholder="Search notes..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 text-sm bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 shadow-sm"
+              className="w-full pl-9 pr-4 py-2.5 text-sm bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 shadow-sm"
             />
-            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5 pointer-events-none" />
+            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-3 pointer-events-none" />
           </div>
 
           {/* Class Filter */}
           <select
             value={selectedClass}
             onChange={(e) => setSelectedClass(e.target.value)}
-            className="px-3 py-2 text-sm bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-700 shadow-sm"
+            className="w-full px-3 py-2.5 text-sm bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-700 shadow-sm"
           >
             <option value="All">All Classes</option>
             {CLASSES.map((c) => (
@@ -121,7 +121,7 @@ export default function NotesTableClient({ initialNotes }: NotesTableClientProps
           <select
             value={selectedStatus}
             onChange={(e) => setSelectedStatus(e.target.value)}
-            className="px-3 py-2 text-sm bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-700 shadow-sm"
+            className="w-full px-3 py-2.5 text-sm bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-700 shadow-sm"
           >
             <option value="All">All Statuses</option>
             <option value="published">Published Only</option>
@@ -131,7 +131,7 @@ export default function NotesTableClient({ initialNotes }: NotesTableClientProps
 
         <Link
           href="/admin/notes/new"
-          className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-semibold shadow-sm transition"
+          className="w-full md:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-semibold shadow-sm transition active:scale-95 flex-shrink-0"
         >
           <Plus className="w-4 h-4" />
           <span>Create Note</span>
@@ -141,7 +141,7 @@ export default function NotesTableClient({ initialNotes }: NotesTableClientProps
       {/* Notes Table */}
       <div className="bg-white rounded-2xl border border-slate-200/90 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm">
+          <table className="w-full text-left text-sm min-w-[700px]">
             <thead className="bg-slate-50 text-slate-500 text-xs uppercase font-semibold border-b border-slate-200">
               <tr>
                 <th className="px-6 py-4">Title</th>

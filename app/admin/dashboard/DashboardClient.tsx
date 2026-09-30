@@ -55,12 +55,12 @@ export default function DashboardClient({ initialNotes }: DashboardClientProps) 
   const recentNotes = notes.slice(0, 5);
 
   return (
-    <div className="max-w-7xl mx-auto px-6 py-8 space-y-8">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6 sm:space-y-8">
       {/* ========================================================= */}
       {/* CORE STATS: Total, Published, Drafts                      */}
       {/* ========================================================= */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-        <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm flex items-center gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-5">
+        <div className="bg-white p-5 sm:p-6 rounded-2xl border border-slate-200/80 shadow-sm flex items-center gap-4">
           <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
             <FileText className="w-6 h-6" />
           </div>
@@ -146,7 +146,7 @@ export default function DashboardClient({ initialNotes }: DashboardClientProps) 
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm">
+          <table className="w-full text-left text-sm min-w-[620px]">
             <thead className="bg-slate-50 text-slate-500 text-xs uppercase font-semibold border-b border-slate-200">
               <tr>
                 <th className="px-6 py-3.5">Title</th>
