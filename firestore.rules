@@ -1,6 +1,7 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+
     // EBoard Notes Collection Rules
     match /notes/{noteId} {
       // Unauthenticated students can ONLY read published notes
@@ -30,9 +31,18 @@ service cloud.firestore {
       allow write: if request.auth != null;
     }
 
-    // Classes / Metadata Collection Rules
+    // Classes / Metadata / Settings Collection Rules
     match /settings/{settingId} {
       allow read: if true;
+      allow write: if request.auth != null;
+    }
+
+    // Staff Accounts Collection Rules
+    match /staff/{staffId} {
+      // Any authenticated user can read staff list (needed for role checking on login)
+      allow read: if request.auth != null;
+      // Only authenticated users can create/update/delete staff records
+      // (further enforcement should be done server-side or via Admin SDK)
       allow write: if request.auth != null;
     }
   }

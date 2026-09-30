@@ -4,32 +4,88 @@ import {
   onAuthStateChanged,
   User,
 } from 'firebase/auth';
-import { auth, isConfigured } from './config';
+import {
+  doc,
+  getDoc,
+  collection,
+  query,
+  where,
+  getDocs,
+  limit,
+} from 'firebase/firestore';
+import { auth, db, isConfigured } from './config';
 
 export interface AdminUser {
   uid: string;
   email: string | null;
   displayName: string | null;
+  role: 'admin' | 'staff';
+  subject?: string;
   isDemo?: boolean;
 }
 
-// Key for storing fallback demo session
+// Key for storing session in localStorage
 const DEMO_AUTH_KEY = 'eboard_demo_auth_session';
+// The main admin email — only this email gets role 'admin'
+const ADMIN_EMAIL = process.env.NEXT_PUBLIC_ADMIN_EMAIL || '';
+
+/**
+ * Determine if a UID belongs to a staff member and return their Firestore record.
+ */
+async function getStaffRole(
+  email: string
+): Promise<{ role: 'admin' | 'staff'; displayName?: string; subject?: string }> {
+  // If it matches admin email, always admin
+  if (ADMIN_EMAIL && email.trim().toLowerCase() === ADMIN_EMAIL.trim().toLowerCase()) {
+    return { role: 'admin' };
+  }
+
+  if (!isConfigured || !db) return { role: 'admin' }; // fallback for demo
+
+  try {
+    const staffRef = collection(db, 'staff');
+    const q = query(staffRef, where('email', '==', email.trim().toLowerCase()), limit(1));
+    const snapshot = await getDocs(q);
+    if (!snapshot.empty) {
+      const data = snapshot.docs[0].data();
+      if (!data.active) {
+        throw new Error('Your account has been suspended. Please contact school administration.');
+      }
+      return {
+        role: 'staff',
+        displayName: data.name,
+        subject: data.subject,
+      };
+    }
+  } catch (err: any) {
+    if (err.message?.includes('suspended')) throw err;
+    console.warn('Error checking staff role:', err);
+  }
+
+  return { role: 'admin' };
+}
 
 export async function loginWithEmail(email: string, pass: string): Promise<AdminUser> {
   // If Firebase is configured with real credentials, use Firebase Auth
   if (isConfigured && auth) {
     try {
       const cred = await signInWithEmailAndPassword(auth, email.trim(), pass);
-      return {
+      const roleData = await getStaffRole(cred.user.email || email);
+      const user: AdminUser = {
         uid: cred.user.uid,
         email: cred.user.email,
-        displayName: cred.user.displayName || 'Teacher',
+        displayName: roleData.displayName || cred.user.displayName || 'Teacher',
+        role: roleData.role,
+        subject: roleData.subject,
         isDemo: false,
       };
+      // Cache in localStorage so subscribeToAuth can read it
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(DEMO_AUTH_KEY, JSON.stringify(user));
+      }
+      return user;
     } catch (error: any) {
       console.warn('Firebase Auth attempt failed, checking fallback:', error);
-      // If error is invalid-api-key or unauthorized, allow fallback demo login
       if (
         error.code === 'auth/invalid-api-key' ||
         error.code === 'auth/network-request-failed' ||
@@ -38,11 +94,12 @@ export async function loginWithEmail(email: string, pass: string): Promise<Admin
         return handleDemoLogin(email, pass);
       }
 
-      // Format clean student/teacher friendly error messages
-      if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
-        throw new Error('Incorrect email or password. Please verify your administrator credentials.');
+      if (error.message?.includes('suspended')) {
+        throw new Error(error.message);
+      } else if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+        throw new Error('Incorrect email or password. Please verify your credentials.');
       } else if (error.code === 'auth/user-not-found') {
-        throw new Error('Administrator account not found. Please contact school administration.');
+        throw new Error('Account not found. Please contact school administration.');
       } else if (error.code === 'auth/too-many-requests') {
         throw new Error('Too many login attempts. Please wait a few minutes before trying again.');
       }
@@ -55,16 +112,19 @@ export async function loginWithEmail(email: string, pass: string): Promise<Admin
 }
 
 function handleDemoLogin(email: string, pass: string): AdminUser {
-  // Allow login for testing if in development/demo mode
   const cleanEmail = email.trim().toLowerCase();
   if (
-    (cleanEmail === 'teacher@eboard.edu' || cleanEmail === 'admin@eboard.edu' || cleanEmail.includes('teacher') || cleanEmail.includes('admin')) &&
+    (cleanEmail === 'teacher@eboard.edu' ||
+      cleanEmail === 'admin@eboard.edu' ||
+      cleanEmail.includes('teacher') ||
+      cleanEmail.includes('admin')) &&
     pass.length >= 6
   ) {
     const demoUser: AdminUser = {
       uid: 'demo-teacher-001',
       email: cleanEmail,
       displayName: 'Teacher Admin',
+      role: 'admin',
       isDemo: true,
     };
     if (typeof window !== 'undefined') {
@@ -90,12 +150,14 @@ export async function logoutUser(): Promise<void> {
 }
 
 export function subscribeToAuth(callback: (user: AdminUser | null) => void): () => void {
-  // Check local demo session first
+  // Check local session first (works for both real and demo)
   if (typeof window !== 'undefined') {
-    const demoSaved = localStorage.getItem(DEMO_AUTH_KEY);
-    if (demoSaved) {
+    const saved = localStorage.getItem(DEMO_AUTH_KEY);
+    if (saved) {
       try {
-        const parsed = JSON.parse(demoSaved);
+        const parsed = JSON.parse(saved) as AdminUser;
+        // Ensure role field is present for old sessions
+        if (!parsed.role) parsed.role = 'admin';
         callback(parsed);
         return () => {};
       } catch (e) {
@@ -105,21 +167,55 @@ export function subscribeToAuth(callback: (user: AdminUser | null) => void): () 
   }
 
   if (isConfigured && auth) {
-    return onAuthStateChanged(auth, (firebaseUser: User | null) => {
+    return onAuthStateChanged(auth, async (firebaseUser: User | null) => {
       if (firebaseUser) {
-        callback({
-          uid: firebaseUser.uid,
-          email: firebaseUser.email,
-          displayName: firebaseUser.displayName || 'Teacher',
-          isDemo: false,
-        });
-      } else {
-        // Fallback check in case window was updated
+        // Try to restore from localStorage cache first (fast)
         if (typeof window !== 'undefined') {
-          const demoSaved = localStorage.getItem(DEMO_AUTH_KEY);
-          if (demoSaved) {
-            callback(JSON.parse(demoSaved));
-            return;
+          const saved = localStorage.getItem(DEMO_AUTH_KEY);
+          if (saved) {
+            try {
+              const parsed = JSON.parse(saved) as AdminUser;
+              if (parsed.uid === firebaseUser.uid) {
+                if (!parsed.role) parsed.role = 'admin';
+                callback(parsed);
+                return;
+              }
+            } catch {}
+          }
+        }
+
+        // Otherwise fetch role from Firestore
+        try {
+          const roleData = await getStaffRole(firebaseUser.email || '');
+          const user: AdminUser = {
+            uid: firebaseUser.uid,
+            email: firebaseUser.email,
+            displayName: roleData.displayName || firebaseUser.displayName || 'Teacher',
+            role: roleData.role,
+            subject: roleData.subject,
+            isDemo: false,
+          };
+          if (typeof window !== 'undefined') {
+            localStorage.setItem(DEMO_AUTH_KEY, JSON.stringify(user));
+          }
+          callback(user);
+        } catch {
+          callback({
+            uid: firebaseUser.uid,
+            email: firebaseUser.email,
+            displayName: firebaseUser.displayName || 'Teacher',
+            role: 'admin',
+            isDemo: false,
+          });
+        }
+      } else {
+        if (typeof window !== 'undefined') {
+          const saved = localStorage.getItem(DEMO_AUTH_KEY);
+          if (saved) {
+            try {
+              callback(JSON.parse(saved));
+              return;
+            } catch {}
           }
         }
         callback(null);

@@ -9,6 +9,8 @@ interface AuthContextType {
   login: (email: string, pass: string) => Promise<void>;
   logout: () => Promise<void>;
   isAuthenticated: boolean;
+  isAdmin: boolean;
+  isStaff: boolean;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -17,6 +19,8 @@ const AuthContext = createContext<AuthContextType>({
   login: async () => {},
   logout: async () => {},
   isAuthenticated: false,
+  isAdmin: false,
+  isStaff: false,
 });
 
 // Detect synchronous localStorage session so we never start in a loading state
@@ -24,7 +28,11 @@ function getInitialUser(): AdminUser | null {
   if (typeof window === 'undefined') return null;
   try {
     const raw = localStorage.getItem('eboard_demo_auth_session');
-    if (raw) return JSON.parse(raw) as AdminUser;
+    if (raw) {
+      const parsed = JSON.parse(raw) as AdminUser;
+      if (!parsed.role) parsed.role = 'admin'; // back-compat for old sessions
+      return parsed;
+    }
   } catch {}
   return null;
 }
@@ -32,7 +40,6 @@ function getInitialUser(): AdminUser | null {
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const initialUser = useRef(getInitialUser());
   const [user, setUser] = useState<AdminUser | null>(initialUser.current);
-  // If we already have a user from localStorage, we're not loading
   const [loading, setLoading] = useState(!initialUser.current);
 
   useEffect(() => {
@@ -71,6 +78,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         login: handleLogin,
         logout: handleLogout,
         isAuthenticated: !!user,
+        isAdmin: user?.role === 'admin',
+        isStaff: user?.role === 'staff',
       }}
     >
       {children}

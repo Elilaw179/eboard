@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Presentation, Search, Menu, X } from 'lucide-react';
+import { Presentation, Search, Menu, X, GraduationCap } from 'lucide-react';
 
 const MAX_CLICKS = 5;
 const RESET_DELAY = 2500;
@@ -121,7 +121,7 @@ export default function StudentNavbar() {
               })}
             </nav>
 
-            {/* Search Bar on Desktop */}
+            {/* Search Bar + Staff Login on Desktop */}
             <div className="hidden sm:flex items-center gap-3">
               <form onSubmit={handleSearchSubmit} className="relative">
                 <input
@@ -133,6 +133,15 @@ export default function StudentNavbar() {
                 />
                 <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5 pointer-events-none" />
               </form>
+              {/* Staff Login CTA */}
+              <Link
+                href="/admin/login"
+                className="flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-full bg-slate-900 text-white hover:bg-blue-700 transition shadow-sm"
+                title="Staff / Teacher Login"
+              >
+                <GraduationCap className="w-3.5 h-3.5" />
+                Staff Login
+              </Link>
             </div>
 
             {/* Mobile menu button */}
@@ -177,6 +186,17 @@ export default function StudentNavbar() {
                   {link.name}
                 </Link>
               ))}
+            </div>
+            {/* Staff Login (mobile) */}
+            <div className="pt-1 border-t border-slate-100">
+              <Link
+                href="/admin/login"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center gap-2 w-full px-3 py-2.5 rounded-xl text-sm font-semibold bg-slate-900 text-white hover:bg-blue-700 transition"
+              >
+                <GraduationCap className="w-4 h-4" />
+                Staff / Teacher Login
+              </Link>
             </div>
           </div>
         )}

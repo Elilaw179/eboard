@@ -13,6 +13,7 @@ import {
   ExternalLink,
   Image as ImageIcon,
   X,
+  Users,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useAdminUI } from './AdminUIContext';
@@ -20,7 +21,7 @@ import { useAdminUI } from './AdminUIContext';
 export default function AdminSidebar() {
   const pathname = usePathname();
   const router = useRouter();
-  const { logout, user } = useAuth();
+  const { logout, user, isAdmin } = useAuth();
   const { sidebarOpen, closeSidebar } = useAdminUI();
 
   const handleLogout = async () => {
@@ -29,13 +30,20 @@ export default function AdminSidebar() {
     router.push('/admin/login');
   };
 
-  const navItems = [
+  const baseNavItems = [
     { name: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
     { name: 'Notes', href: '/admin/notes', icon: FileText },
     { name: 'Create Note', href: '/admin/notes/new', icon: FilePlus },
     { name: 'Subjects', href: '/admin/subjects', icon: BookMarked },
+  ];
+
+  // Admin-only nav items
+  const adminNavItems = [
+    { name: 'Staff Accounts', href: '/admin/staff', icon: Users },
     { name: 'Hero Settings', href: '/admin/hero', icon: ImageIcon },
   ];
+
+  const navItems = isAdmin ? [...baseNavItems, ...adminNavItems] : baseNavItems;
 
   // Common sidebar navigation content
   const sidebarContent = (
@@ -126,11 +134,20 @@ export default function AdminSidebar() {
               {user?.email || 'admin@eboard.edu'}
             </p>
           </div>
-          {user?.isDemo && (
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-blue-900/60 text-blue-300 border border-blue-700/50">
-              Demo
+          <div className="flex flex-col items-end gap-1">
+            {user?.isDemo && (
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-blue-900/60 text-blue-300 border border-blue-700/50">
+                Demo
+              </span>
+            )}
+            <span className={`text-[10px] font-bold px-2 py-0.5 rounded border ${
+              isAdmin
+                ? 'bg-amber-900/50 text-amber-300 border-amber-700/50'
+                : 'bg-slate-800 text-slate-400 border-slate-700'
+            }`}>
+              {isAdmin ? 'Admin' : 'Staff'}
             </span>
-          )}
+          </div>
         </div>
 
         <button
