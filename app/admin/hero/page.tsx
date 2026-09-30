@@ -374,16 +374,17 @@ export default function HeroSettingsPage() {
                 style={{ opacity: (settings.imageOpacity ?? 70) / 100 }}
               />
             )}
-            {/* Dark gradient overlay */}
-            <div className="absolute inset-0 bg-gradient-to-r from-slate-950/95 via-slate-950/85 to-slate-950/70" />
+            {/* Soft, clean overlay that is not too dim */}
+            <div className="absolute inset-0 bg-gradient-to-r from-slate-950/75 via-slate-950/50 to-slate-950/25" />
+            <div className="absolute inset-0 bg-gradient-to-t from-slate-950/50 via-transparent to-transparent" />
 
-            {/* Floating text content */}
+            {/* Floating text content (original clean layout) */}
             <div className="relative z-10 space-y-3 text-white max-w-xl">
               <span className="inline-block px-3 py-1 rounded-full bg-blue-500/20 border border-blue-400/30 text-blue-300 text-[10px] font-bold uppercase tracking-wider">
                 Digital Classroom Platform
               </span>
               <h4 className="text-2xl sm:text-3xl font-black tracking-tight leading-tight">
-                {settings.headline || 'ClassBoard'}
+                {settings.headline || 'Lawtronic E-Board'}
               </h4>
               <p className="text-sm font-medium text-blue-100/90">
                 &ldquo;{settings.subheadline || 'Your classroom notes, always within reach.'}&rdquo;

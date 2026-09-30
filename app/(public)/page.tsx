@@ -99,10 +99,9 @@ export default function HomePage() {
           ))}
         </div>
 
-        {/* 2. Layered dark and educational glass gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-r from-slate-950/95 via-slate-950/85 to-slate-950/70" />
-        <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-slate-950/60" />
-        <div className="absolute inset-0 backdrop-blur-[1px]" />
+        {/* 2. Soft, clean overlay that is not too dim */}
+        <div className="absolute inset-0 bg-gradient-to-r from-slate-950/75 via-slate-950/50 to-slate-950/25" />
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/50 via-transparent to-transparent" />
 
         {/* 3. Subtle ambient glow and pattern overlay */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
@@ -117,7 +116,7 @@ export default function HomePage() {
           <div className="absolute -bottom-24 right-1/4 w-96 h-96 rounded-full bg-indigo-500/20 blur-3xl pointer-events-none" />
         </div>
 
-        {/* 4. Floating Hero Content */}
+        {/* 4. Floating Hero Content (restored original clean structure) */}
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-24 w-full">
           <div className="max-w-3xl text-white space-y-6">
 
