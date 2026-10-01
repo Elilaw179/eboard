@@ -37,6 +37,14 @@ service cloud.firestore {
       allow write: if request.auth != null;
     }
 
+    // Class Passwords Collection Rules
+    match /class_passwords/{classSlug} {
+      // Anyone (students across all devices) can read password status
+      allow read: if true;
+      // Only authenticated admins/teachers can update class passwords
+      allow write: if request.auth != null;
+    }
+
     // Staff Accounts Collection Rules
     match /staff/{staffId} {
       // Any authenticated user can read staff list (needed for role checking on login)
