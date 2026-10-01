@@ -24,9 +24,10 @@ import DeleteConfirmModal from '@/components/admin/DeleteConfirmModal';
 
 interface NotesTableClientProps {
   initialNotes: Note[];
+  basePath?: string; // e.g. '/admin/notes' (default) or '/admin/staff-portal/notes'
 }
 
-export default function NotesTableClient({ initialNotes }: NotesTableClientProps) {
+export default function NotesTableClient({ initialNotes, basePath = '/admin/notes' }: NotesTableClientProps) {
   const [notes, setNotes] = useState<Note[]>(initialNotes);
   const [loading, setLoading] = useState(true);
 
@@ -130,7 +131,7 @@ export default function NotesTableClient({ initialNotes }: NotesTableClientProps
         </div>
 
         <Link
-          href="/admin/notes/new"
+          href={`${basePath}/new`}
           className="w-full md:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-semibold shadow-sm transition active:scale-95 flex-shrink-0"
         >
           <Plus className="w-4 h-4" />
@@ -223,7 +224,7 @@ export default function NotesTableClient({ initialNotes }: NotesTableClientProps
 
                         {/* Edit */}
                         <Link
-                          href={`/admin/notes/${note.id}/edit`}
+                          href={`${basePath}/${note.id}/edit`}
                           className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition"
                           title="Edit Note"
                         >

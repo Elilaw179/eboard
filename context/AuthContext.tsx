@@ -6,7 +6,7 @@ import { AdminUser, subscribeToAuth, loginWithEmail, logoutUser } from '@/lib/fi
 interface AuthContextType {
   user: AdminUser | null;
   loading: boolean;
-  login: (email: string, pass: string) => Promise<void>;
+  login: (email: string, pass: string, roleHint?: 'staff' | 'admin') => Promise<AdminUser>;
   logout: () => Promise<void>;
   isAuthenticated: boolean;
   isAdmin: boolean;
@@ -16,7 +16,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType>({
   user: null,
   loading: true,
-  login: async () => {},
+  login: async () => ({ uid: '', email: null, displayName: null, role: 'admin' }),
   logout: async () => {},
   isAuthenticated: false,
   isAdmin: false,
@@ -50,11 +50,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => unsubscribe();
   }, []);
 
-  const handleLogin = async (email: string, pass: string) => {
+  const handleLogin = async (
+    email: string,
+    pass: string,
+    roleHint?: 'staff' | 'admin'
+  ): Promise<AdminUser> => {
     setLoading(true);
     try {
-      const loggedUser = await loginWithEmail(email, pass);
+      const loggedUser = await loginWithEmail(email, pass, roleHint);
       setUser(loggedUser);
+      return loggedUser;
     } finally {
       setLoading(false);
     }

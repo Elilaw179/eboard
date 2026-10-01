@@ -3,15 +3,15 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Presentation, Lock, Mail, ArrowLeft, ShieldCheck, AlertCircle } from 'lucide-react';
+import { Lock, Mail, ArrowLeft, ShieldCheck, AlertCircle } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 
 export default function AdminLoginPage() {
   const router = useRouter();
   const { login } = useAuth();
 
-  const [email, setEmail] = useState('teacher@eboard.edu');
-  const [password, setPassword] = useState('admin123');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -21,8 +21,14 @@ export default function AdminLoginPage() {
     setLoading(true);
 
     try {
-      await login(email, password);
-      router.push('/admin/dashboard');
+      // login() now returns the AdminUser with role
+      const loggedUser = await login(email, password, 'admin');
+      // Role-based redirect: staff → Staff Dashboard, admin → Admin Dashboard
+      if (loggedUser?.role === 'staff') {
+        router.push('/staff/dashboard');
+      } else {
+        router.push('/admin/dashboard');
+      }
     } catch (err: any) {
       setError(err.message || 'Authentication failed. Please check your credentials.');
     } finally {
@@ -55,13 +61,13 @@ export default function AdminLoginPage() {
             />
           </div>
           <h2 className="text-3xl font-extrabold text-white tracking-tight">
-            Teacher Portal
+            Admin Portal
           </h2>
           <p className="mt-1 text-xs font-bold text-blue-400 tracking-wider uppercase">
             Lawtronic Technologies
           </p>
           <p className="mt-1 text-xs text-slate-400">
-            Sign in to create, publish, and manage classroom notes
+            Sign in to access school administration and management
           </p>
         </div>
       </div>
@@ -78,7 +84,7 @@ export default function AdminLoginPage() {
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
               <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-2">
-                Teacher Email
+                Admin Email
               </label>
               <div className="relative">
                 <input
@@ -86,7 +92,7 @@ export default function AdminLoginPage() {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="teacher@eboard.edu"
+                  placeholder="admin@eboard.edu"
                   className="w-full pl-10 pr-4 py-2.5 text-sm bg-slate-900 border border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-white placeholder:text-slate-500"
                 />
                 <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-3 pointer-events-none" />
@@ -120,16 +126,29 @@ export default function AdminLoginPage() {
             </button>
           </form>
 
-          {/* Teacher Demo Credentials Note */}
+          {/* Admin Demo Credentials Note */}
           <div className="mt-6 pt-5 border-t border-slate-700/80 text-center">
             <p className="text-[11px] text-slate-400 leading-relaxed">
-              Teacher accounts are provisioned by school administration.
+              Authorized school administration access only.
               <br />
               <span className="text-slate-500">
-                Demo access: <strong className="text-slate-300">teacher@eboard.edu</strong> / <strong className="text-slate-300">admin123</strong>
+                Demo access: <strong className="text-slate-300">admin@eboard.edu</strong> / <strong className="text-slate-300">admin123</strong>
               </span>
             </p>
           </div>
+        </div>
+
+        {/* Link to Staff Login */}
+        <div className="mt-6 text-center">
+          <p className="text-xs text-slate-400">
+            Staff or Teacher?{' '}
+            <Link
+              href="/staff/login"
+              className="text-blue-400 hover:text-blue-300 font-semibold underline underline-offset-4 transition"
+            >
+              Sign In to Staff Portal →
+            </Link>
+          </p>
         </div>
       </div>
     </div>

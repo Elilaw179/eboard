@@ -575,14 +575,6 @@ export default function StaffManagementClient() {
         )}
       </div>
 
-      {/* Info Note */}
-      <div className="mt-6 p-4 rounded-2xl bg-blue-50 border border-blue-100">
-        <p className="text-xs text-blue-700 leading-relaxed">
-          <strong>How it works:</strong> Staff members use the email and password you set here to log in via the{' '}
-          <strong>Staff Login</strong> button on the student portal. They can create and upload notes, but
-          cannot access Staff Management or Hero Settings — only you (the admin) can.
-        </p>
-      </div>
 
       <style>{`
         @keyframes slideIn {

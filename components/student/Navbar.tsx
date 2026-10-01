@@ -135,7 +135,7 @@ export default function StudentNavbar() {
               </form>
               {/* Staff Login CTA */}
               <Link
-                href="/admin/login"
+                href="/staff/login"
                 className="flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-full bg-slate-900 text-white hover:bg-blue-700 transition shadow-sm"
                 title="Staff / Teacher Login"
               >
@@ -190,7 +190,7 @@ export default function StudentNavbar() {
             {/* Staff Login (mobile) */}
             <div className="pt-1 border-t border-slate-100">
               <Link
-                href="/admin/login"
+                href="/staff/login"
                 onClick={() => setMobileMenuOpen(false)}
                 className="flex items-center gap-2 w-full px-3 py-2.5 rounded-xl text-sm font-semibold bg-slate-900 text-white hover:bg-blue-700 transition"
               >

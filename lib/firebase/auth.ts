@@ -30,51 +30,121 @@ const DEMO_AUTH_KEY = 'eboard_demo_auth_session';
 const ADMIN_EMAIL = process.env.NEXT_PUBLIC_ADMIN_EMAIL || '';
 
 /**
- * Determine if a UID belongs to a staff member and return their Firestore record.
+ * Determine if an account belongs to a staff member and return their record.
  */
 async function getStaffRole(
-  email: string
+  email: string,
+  uid?: string,
+  roleHint?: 'staff' | 'admin'
 ): Promise<{ role: 'admin' | 'staff'; displayName?: string; subject?: string }> {
-  // If it matches admin email, always admin
-  if (ADMIN_EMAIL && email.trim().toLowerCase() === ADMIN_EMAIL.trim().toLowerCase()) {
+  const cleanEmail = email.trim().toLowerCase();
+
+  // If it explicitly matches configured admin email, always admin
+  if (ADMIN_EMAIL && cleanEmail === ADMIN_EMAIL.trim().toLowerCase()) {
     return { role: 'admin' };
   }
 
-  if (!isConfigured || !db) return { role: 'admin' }; // fallback for demo
-
-  try {
-    const staffRef = collection(db, 'staff');
-    const q = query(staffRef, where('email', '==', email.trim().toLowerCase()), limit(1));
-    const snapshot = await getDocs(q);
-    if (!snapshot.empty) {
-      const data = snapshot.docs[0].data();
-      if (!data.active) {
-        throw new Error('Your account has been suspended. Please contact school administration.');
+  // 1. Check local staff accounts cache (instant, reliable across offline/online)
+  if (typeof window !== 'undefined') {
+    try {
+      const localStaffRaw = localStorage.getItem('eboard_staff_accounts');
+      if (localStaffRaw) {
+        const localList = JSON.parse(localStaffRaw);
+        if (Array.isArray(localList)) {
+          const match = localList.find(
+            (s: any) =>
+              (s.email && s.email.trim().toLowerCase() === cleanEmail) ||
+              (uid && (s.uid === uid || s.id === uid))
+          );
+          if (match) {
+            if (match.active === false) {
+              throw new Error('Your account has been suspended. Please contact school administration.');
+            }
+            return {
+              role: 'staff',
+              displayName: match.name,
+              subject: match.subject,
+            };
+          }
+        }
       }
-      return {
-        role: 'staff',
-        displayName: data.name,
-        subject: data.subject,
-      };
+    } catch (e: any) {
+      if (e.message?.includes('suspended')) throw e;
     }
-  } catch (err: any) {
-    if (err.message?.includes('suspended')) throw err;
-    console.warn('Error checking staff role:', err);
   }
 
+  // 2. Check Firestore
+  if (isConfigured && db) {
+    // 2a. Check by UID first (most reliable with Firebase security rules)
+    if (uid) {
+      try {
+        const staffDocRef = doc(db, 'staff', uid);
+        const staffDoc = await getDoc(staffDocRef);
+        if (staffDoc.exists()) {
+          const data = staffDoc.data();
+          if (data.active === false) {
+            throw new Error('Your account has been suspended. Please contact school administration.');
+          }
+          return {
+            role: 'staff',
+            displayName: data.name,
+            subject: data.subject,
+          };
+        }
+      } catch (err: any) {
+        if (err.message?.includes('suspended')) throw err;
+        console.warn('Error checking staff doc by uid:', err);
+      }
+    }
+
+    // 2b. Query by email
+    try {
+      const staffRef = collection(db, 'staff');
+      const q = query(staffRef, where('email', '==', cleanEmail), limit(1));
+      const snapshot = await getDocs(q);
+      if (!snapshot.empty) {
+        const data = snapshot.docs[0].data();
+        if (data.active === false) {
+          throw new Error('Your account has been suspended. Please contact school administration.');
+        }
+        return {
+          role: 'staff',
+          displayName: data.name,
+          subject: data.subject,
+        };
+      }
+    } catch (err: any) {
+      if (err.message?.includes('suspended')) throw err;
+      console.warn('Error checking staff collection by email:', err);
+    }
+  }
+
+  // 3. If logging in via staff portal login, respect the staff intent unless master admin
+  if (roleHint === 'staff') {
+    return {
+      role: 'staff',
+      displayName: cleanEmail.split('@')[0],
+    };
+  }
+
+  // Fallback to admin if not in staff records
   return { role: 'admin' };
 }
 
-export async function loginWithEmail(email: string, pass: string): Promise<AdminUser> {
+export async function loginWithEmail(
+  email: string,
+  pass: string,
+  roleHint?: 'staff' | 'admin'
+): Promise<AdminUser> {
   // If Firebase is configured with real credentials, use Firebase Auth
   if (isConfigured && auth) {
     try {
       const cred = await signInWithEmailAndPassword(auth, email.trim(), pass);
-      const roleData = await getStaffRole(cred.user.email || email);
+      const roleData = await getStaffRole(cred.user.email || email, cred.user.uid, roleHint);
       const user: AdminUser = {
         uid: cred.user.uid,
         email: cred.user.email,
-        displayName: roleData.displayName || cred.user.displayName || 'Teacher',
+        displayName: roleData.displayName || cred.user.displayName || (roleData.role === 'staff' ? 'Staff Member' : 'Admin'),
         role: roleData.role,
         subject: roleData.subject,
         isDemo: false,
@@ -91,7 +161,7 @@ export async function loginWithEmail(email: string, pass: string): Promise<Admin
         error.code === 'auth/network-request-failed' ||
         error.code === 'auth/api-key-not-valid'
       ) {
-        return handleDemoLogin(email, pass);
+        return handleDemoLogin(email, pass, roleHint);
       }
 
       if (error.message?.includes('suspended')) {
@@ -108,11 +178,28 @@ export async function loginWithEmail(email: string, pass: string): Promise<Admin
   }
 
   // Fallback demo authentication
-  return handleDemoLogin(email, pass);
+  return handleDemoLogin(email, pass, roleHint);
 }
 
-function handleDemoLogin(email: string, pass: string): AdminUser {
+function handleDemoLogin(email: string, pass: string, roleHint?: 'staff' | 'admin'): AdminUser {
   const cleanEmail = email.trim().toLowerCase();
+  const isStaffIntent = roleHint === 'staff' || cleanEmail.includes('staff');
+
+  if (isStaffIntent && pass.length >= 6) {
+    const demoStaff: AdminUser = {
+      uid: 'demo-staff-001',
+      email: cleanEmail,
+      displayName: 'Teacher Staff',
+      role: 'staff',
+      subject: 'General',
+      isDemo: true,
+    };
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(DEMO_AUTH_KEY, JSON.stringify(demoStaff));
+    }
+    return demoStaff;
+  }
+
   if (
     (cleanEmail === 'teacher@eboard.edu' ||
       cleanEmail === 'admin@eboard.edu' ||
@@ -133,7 +220,7 @@ function handleDemoLogin(email: string, pass: string): AdminUser {
     return demoUser;
   }
 
-  throw new Error('Invalid credentials. For quick preview, use teacher@eboard.edu with password: admin123');
+  throw new Error('Invalid credentials. Please enter a valid account email and password.');
 }
 
 export async function logoutUser(): Promise<void> {

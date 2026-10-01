@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import {
   ArrowLeft,
@@ -32,6 +32,13 @@ export default function NoteEditorForm({
   isEditing = false,
 }: NoteEditorFormProps) {
   const router = useRouter();
+  const pathname = usePathname();
+  // Determine where to go after saving: staff portal or admin panel
+  const notesListPath = pathname?.startsWith('/staff')
+    ? '/staff/notes'
+    : pathname?.startsWith('/admin/staff-portal')
+    ? '/admin/staff-portal/notes'
+    : '/admin/notes';
 
   const [loadingNote, setLoadingNote] = useState(isEditing && !!noteId);
   const [initialNote, setInitialNote] = useState<Note | undefined>(initialNoteProp);
@@ -142,7 +149,7 @@ export default function NoteEditorForm({
             : 'Lesson saved as draft!'
         );
         setTimeout(() => {
-          router.push('/admin/notes');
+          router.push(notesListPath);
         }, 1200);
       }
     } catch (err: any) {
@@ -167,7 +174,7 @@ export default function NoteEditorForm({
       {/* Top Breadcrumb & Quick Actions */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <Link
-          href="/admin/notes"
+          href={notesListPath}
           className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-slate-900 transition"
         >
           <ArrowLeft className="w-3.5 h-3.5" />
