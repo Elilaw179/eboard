@@ -23,6 +23,9 @@ import { formatDate, timeAgo, formatDateTime, getReadingTime } from '@/lib/utils
 import CopyButton from '@/components/student/CopyButton';
 import ProjectorButton from '@/components/student/ProjectorButton';
 import BoardThemeToggle from '@/components/student/BoardThemeToggle';
+import ClassAccessGate from '@/components/student/ClassAccessGate';
+import { getClassPassword, isClassUnlocked } from '@/services/classPasswords';
+import { getClassBySlug } from '@/types/class';
 
 interface NoteReaderClientProps {
   noteId: string;
@@ -36,6 +39,10 @@ export default function NoteReaderClient({ noteId }: NoteReaderClientProps) {
   const [fontSize, setFontSize] = useState<'normal' | 'large' | 'xlarge'>('normal');
   const [linkCopied, setLinkCopied] = useState(false);
 
+  // Password Protection for the note's class
+  const [isPasswordRequired, setIsPasswordRequired] = useState(false);
+  const [isUnlocked, setIsUnlocked] = useState(false);
+
   // Fetch note from Firestore on mount
   useEffect(() => {
     setLoadingNote(true);
@@ -44,6 +51,26 @@ export default function NoteReaderClient({ noteId }: NoteReaderClientProps) {
       .catch(console.error)
       .finally(() => setLoadingNote(false));
   }, [noteId]);
+
+  // Check class password protection once note is loaded
+  useEffect(() => {
+    if (!note || !note.classSlug) return;
+    async function checkProtection() {
+      try {
+        const config = await getClassPassword(note!.classSlug);
+        if (config && config.enabled && config.password) {
+          setIsPasswordRequired(true);
+          setIsUnlocked(isClassUnlocked(note!.classSlug));
+        } else {
+          setIsPasswordRequired(false);
+          setIsUnlocked(true);
+        }
+      } catch {
+        setIsUnlocked(true);
+      }
+    }
+    checkProtection();
+  }, [note]);
 
   const handleBoardThemeChange = (theme: 'white' | 'black') => {
     setBoardTheme(theme);
@@ -116,6 +143,22 @@ export default function NoteReaderClient({ noteId }: NoteReaderClientProps) {
         </div>
       </div>
     );
+  }
+
+  // Class Password Protection Gate
+  if (isPasswordRequired && !isUnlocked && note && note.classSlug) {
+    const classDef = getClassBySlug(note.classSlug);
+    if (classDef) {
+      return (
+        <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+          <ClassAccessGate
+            classDef={classDef}
+            onUnlocked={() => setIsUnlocked(true)}
+            backHref={`/class/${classDef.slug}`}
+          />
+        </div>
+      );
+    }
   }
 
   const isBlackboard = boardTheme === 'black';

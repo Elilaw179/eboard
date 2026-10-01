@@ -1,7 +1,19 @@
-import React from 'react';
+'use client';
+
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Sparkles, Compass, Atom, Cpu, BookOpen, GraduationCap, ArrowRight } from 'lucide-react';
+import {
+  Sparkles,
+  Compass,
+  Atom,
+  Cpu,
+  BookOpen,
+  GraduationCap,
+  ArrowRight,
+  Lock,
+} from 'lucide-react';
 import { ClassDefinition } from '@/types/class';
+import { getClassPassword, isClassUnlocked } from '@/services/classPasswords';
 
 interface ClassCardProps {
   classDef: ClassDefinition;
@@ -19,6 +31,19 @@ const ICON_MAP: Record<string, React.ElementType> = {
 
 export default function ClassCard({ classDef, noteCount }: ClassCardProps) {
   const IconComponent = ICON_MAP[classDef.iconName] || BookOpen;
+  const [isProtected, setIsProtected] = useState(false);
+  const [isUnlocked, setIsUnlocked] = useState(false);
+
+  useEffect(() => {
+    getClassPassword(classDef.slug)
+      .then((config) => {
+        if (config && config.enabled && config.password) {
+          setIsProtected(true);
+          setIsUnlocked(isClassUnlocked(classDef.slug));
+        }
+      })
+      .catch(() => {});
+  }, [classDef.slug]);
 
   return (
     <Link
@@ -31,12 +56,24 @@ export default function ClassCard({ classDef, noteCount }: ClassCardProps) {
       <div>
         {/* Header with Icon and Stage Badge */}
         <div className="flex items-center justify-between mb-5">
-          <div className="w-13 h-13 w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-colors duration-300 shadow-sm">
+          <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-colors duration-300 shadow-sm">
             <IconComponent className="w-6 h-6" />
           </div>
-          <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 group-hover:bg-blue-50 group-hover:text-blue-700 transition-colors">
-            {classDef.stage}
-          </span>
+          <div className="flex items-center gap-1.5">
+            {isProtected && (
+              <span
+                className={`p-1 rounded-full ${
+                  isUnlocked ? 'text-emerald-600 bg-emerald-50' : 'text-amber-600 bg-amber-50'
+                }`}
+                title={isUnlocked ? 'Class Unlocked' : 'Password Protected'}
+              >
+                <Lock className="w-3.5 h-3.5" />
+              </span>
+            )}
+            <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 group-hover:bg-blue-50 group-hover:text-blue-700 transition-colors">
+              {classDef.stage}
+            </span>
+          </div>
         </div>
 
         {/* Class Name */}
@@ -56,7 +93,8 @@ export default function ClassCard({ classDef, noteCount }: ClassCardProps) {
           {typeof noteCount === 'number' ? `${noteCount} lesson${noteCount === 1 ? '' : 's'}` : 'View lessons'}
         </span>
         <span className="inline-flex items-center gap-1.5 font-semibold text-blue-600 group-hover:translate-x-1 transition-transform">
-          Access Notes
+          {isProtected && !isUnlocked && <Lock className="w-3.5 h-3.5 text-amber-500" />}
+          <span>Access Notes</span>
           <ArrowRight className="w-4 h-4" />
         </span>
       </div>

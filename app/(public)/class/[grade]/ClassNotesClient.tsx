@@ -8,6 +8,13 @@ import { Note } from '@/types/note';
 import { getPublishedNotes } from '@/services/notes';
 import SubjectFilter from '@/components/student/SubjectFilter';
 import NoteCard from '@/components/student/NoteCard';
+import ClassAccessGate from '@/components/student/ClassAccessGate';
+import {
+  getClassPassword,
+  isClassUnlocked,
+  lockClassInSession,
+} from '@/services/classPasswords';
+import { Lock, Unlock } from 'lucide-react';
 
 interface ClassNotesClientProps {
   classDef: ClassDefinition;
@@ -19,14 +26,44 @@ export default function ClassNotesClient({ classDef }: ClassNotesClientProps) {
   const [selectedSubject, setSelectedSubject] = useState<string>('All');
   const [searchQuery, setSearchQuery] = useState<string>('');
 
-  // Fetch from Firestore on mount
+  // Password Protection State
+  const [isCheckingPassword, setIsCheckingPassword] = useState(true);
+  const [isPasswordRequired, setIsPasswordRequired] = useState(false);
+  const [isUnlocked, setIsUnlocked] = useState(false);
+
+  // Check password protection on mount
   useEffect(() => {
+    async function checkProtection() {
+      try {
+        const config = await getClassPassword(classDef.slug);
+        if (config && config.enabled && config.password) {
+          setIsPasswordRequired(true);
+          const alreadyUnlocked = isClassUnlocked(classDef.slug);
+          setIsUnlocked(alreadyUnlocked);
+        } else {
+          setIsPasswordRequired(false);
+          setIsUnlocked(true);
+        }
+      } catch (err) {
+        console.warn('Error checking class password:', err);
+        setIsUnlocked(true);
+      } finally {
+        setIsCheckingPassword(false);
+      }
+    }
+
+    checkProtection();
+  }, [classDef.slug]);
+
+  // Fetch from Firestore on mount if unlocked
+  useEffect(() => {
+    if (!isUnlocked) return;
     setLoading(true);
     getPublishedNotes({ classSlug: classDef.slug })
       .then((data) => setNotes(data))
       .catch(console.error)
       .finally(() => setLoading(false));
-  }, [classDef.slug]);
+  }, [classDef.slug, isUnlocked]);
 
   // Extract unique subjects from actual notes in this class
   const availableSubjects = useMemo(() => {
@@ -54,6 +91,32 @@ export default function ClassNotesClient({ classDef }: ClassNotesClientProps) {
     });
   }, [notes, selectedSubject, searchQuery]);
 
+  // Re-lock this class
+  const handleLockClass = () => {
+    lockClassInSession(classDef.slug);
+    setIsUnlocked(false);
+  };
+
+  // If currently checking password status, show smooth spinner
+  if (isCheckingPassword) {
+    return (
+      <div className="min-h-[50vh] flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+      </div>
+    );
+  }
+
+  // If class is password protected and not unlocked yet, render Password Gate!
+  if (isPasswordRequired && !isUnlocked) {
+    return (
+      <ClassAccessGate
+        classDef={classDef}
+        onUnlocked={() => setIsUnlocked(true)}
+        backHref="/"
+      />
+    );
+  }
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
       {/* Back to classes */}
@@ -71,8 +134,24 @@ export default function ClassNotesClient({ classDef }: ClassNotesClientProps) {
       <div className="bg-white rounded-3xl p-6 sm:p-10 border border-slate-200/80 shadow-sm mb-8 relative overflow-hidden">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 relative z-10">
           <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-bold uppercase tracking-wider mb-3">
-              {classDef.stage}
+            <div className="flex flex-wrap items-center gap-2 mb-3">
+              <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-bold uppercase tracking-wider">
+                {classDef.stage}
+              </span>
+              {isPasswordRequired && isUnlocked && (
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-semibold">
+                  <Lock className="w-3 h-3 text-emerald-600" />
+                  <span>Class Unlocked</span>
+                  <button
+                    type="button"
+                    onClick={handleLockClass}
+                    className="ml-1 text-[11px] text-slate-500 hover:text-red-600 font-bold underline"
+                    title="Lock this class"
+                  >
+                    Lock
+                  </button>
+                </div>
+              )}
             </div>
             <h1 className="text-3xl sm:text-5xl font-extrabold text-slate-900 tracking-tight">
               {classDef.name}

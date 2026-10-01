@@ -14,6 +14,7 @@ import {
   Image as ImageIcon,
   X,
   Users,
+  KeyRound,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useAdminUI } from './AdminUIContext';
@@ -40,6 +41,7 @@ export default function AdminSidebar() {
   // Admin-only nav items
   const adminNavItems = [
     { name: 'Staff Accounts', href: '/admin/staff', icon: Users },
+    { name: 'Class Passwords', href: '/admin/class-passwords', icon: KeyRound },
     { name: 'Hero Settings', href: '/admin/hero', icon: ImageIcon },
   ];
 
@@ -67,7 +69,7 @@ export default function AdminSidebar() {
               Lawtronic <span className="text-blue-400">Admin</span>
             </span>
             <span className="text-[10px] uppercase font-semibold tracking-wider text-slate-400 block mt-0.5">
-              Teacher Portal
+              Admin Portal
             </span>
           </div>
         </Link>
